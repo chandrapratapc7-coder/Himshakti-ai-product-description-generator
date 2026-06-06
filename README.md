@@ -1,45 +1,16 @@
-# Himshakti-ai-product-description-generator
-A React-based AI product description generator for HimShakti Food Processing Unit to create e-commerce-ready descriptions for Himalayan food products.
+# React + Vite
 
-## Project Overview
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-HimShakti AI Product Description Generator is a React-based web tool designed for HimShakti Food Processing Unit, a food-processing business near Haldwani, Uttarakhand.
+Currently, two official plugins are available:
 
-The tool helps generate professional, keyword-rich, and e-commerce-ready product descriptions for Himalayan food products such as millet snacks, juices, jams, pickles, and traditional food items.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Problem Statement
+## React Compiler
 
-HimShakti wants to list its products on platforms like Amazon, Flipkart, Meesho, and its own D2C website, but lacks the writing capacity to create attractive and optimized product descriptions.
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Objective
+## Expanding the ESLint configuration
 
-To build a web application where users can enter basic product details and generate AI-style product descriptions suitable for e-commerce listings.
-
-## Key Features
-
-- Product name input
-- Ingredients input
-- Weight or quantity input
-- Feature list input
-- Tone selector: Premium, Traditional, Health-focused
-- AI-generated product description
-- Regenerate description option
-- Editable output area
-- Copy-to-clipboard feature
-- Sample product descriptions for HimShakti products
-
-## Tech Stack
-
-- React.js
-- JavaScript
-- HTML
-- CSS
-- Bootstrap / Tailwind CSS
-
-## Project Status
-
-Currently in development.
-
-## Author
-
-Chandra Pratap
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
