@@ -1,10 +1,12 @@
-// Generator.jsx
-// Main Generator page: left input form, right output panel.
-// Manages all form state, validation, and API call (mock for now).
+// Generator.jsx (Week 3 update)
+// Main Generator page — now uses OutputEditor and PreviewCard components.
 
 import { useState } from "react";
 import ProductForm from "../components/ProductForm";
+import OutputEditor from "../components/OutputEditor";
+import PreviewCard from "../components/PreviewCard";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 // ── Initial form state ──────────────────────────────────────────────────────
 const INITIAL_FORM = {
@@ -43,7 +45,7 @@ function mockGenerate(form) {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
-        title: `${form.productName} │ ${form.category} │ ${form.weight}`,
+        title: `${form.productName} | ${form.category} | ${form.weight}`,
         shortDesc: `A premium Himalayan product crafted from ${form.ingredients.split(",")[0].trim()} and other natural ingredients. Perfect for the health-conscious consumer seeking authentic Pahadi flavours.`,
         longDesc: `Introducing ${form.productName} — a ${form.tone.toLowerCase()} offering from the heart of Uttarakhand. Made with ${form.ingredients}, this product embodies the rich culinary heritage of the Himalayas. ${form.features}. Ideal for all age groups and available on ${form.platforms.join(", ")}.`,
         bullets: [
@@ -67,237 +69,20 @@ function mockGenerate(form) {
   });
 }
 
-// ── OutputPanel ─────────────────────────────────────────────────────────────
-function OutputPanel({ output, isLoading, hasSubmitted }) {
-  const [copied, setCopied] = useState("");
-
-  const copy = (text, key) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(key);
-      setTimeout(() => setCopied(""), 2000);
-    });
-  };
-
-  const copyAll = () => {
-    if (!output) return;
-    const all = [
-      `TITLE:\n${output.title}`,
-      `\nSHORT DESCRIPTION:\n${output.shortDesc}`,
-      `\nLONG DESCRIPTION:\n${output.longDesc}`,
-      `\nBULLET POINTS:\n${output.bullets.join("\n")}`,
-      `\nSEO KEYWORDS:\n${output.keywords.join(", ")}`,
-      `\nUSAGE / STORAGE:\n${output.usage}`,
-    ].join("\n");
-    copy(all, "all");
-  };
-
-  // Empty state
-  if (!hasSubmitted && !isLoading) {
-    return (
-      <div className="output-panel output-panel--empty">
-        <div className="empty-state">
-          <span className="empty-icon">🏔</span>
-          <h3 className="empty-title">Your content will appear here</h3>
-          <p className="empty-body">
-            Fill in your product details on the left and click{" "}
-            <strong>Generate Description</strong> to get started.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="output-panel output-panel--loading">
-        <div className="loading-state">
-          <div className="loading-spinner" />
-          <p className="loading-text">Crafting your content…</p>
-          <p className="loading-sub">This usually takes a few seconds</p>
-        </div>
-        {[120, 80, 150, 60, 90].map((w, i) => (
-          <div key={i} className="skeleton" style={{ width: `${w}%`.replace("150%","100%"), marginBottom: "0.75rem" }} />
-        ))}
-      </div>
-    );
-  }
-
-  // Output state
-  return (
-    <div className="output-panel">
-      <div className="output-header">
-        <h2 className="output-title">Generated Content</h2>
-        <button className="copy-all-btn" onClick={copyAll}>
-          {copied === "all" ? "✓ Copied!" : "⎘ Copy All"}
-        </button>
-      </div>
-
-      {[
-        { key: "title",     label: "Product Title",       value: output.title,             rows: 2 },
-        { key: "shortDesc", label: "Short Description",    value: output.shortDesc,         rows: 3 },
-        { key: "longDesc",  label: "Long Description",     value: output.longDesc,          rows: 5 },
-        { key: "bullets",   label: "Bullet Points",        value: output.bullets.join("\n"),rows: 5 },
-        { key: "keywords",  label: "SEO Keywords",         value: output.keywords.join(", "), rows: 2 },
-        { key: "usage",     label: "Usage / Storage",      value: output.usage,             rows: 2 },
-      ].map(({ key, label, value, rows }) => (
-        <div className="output-section" key={key}>
-          <div className="section-header">
-            <label className="section-label">{label}</label>
-            <button
-              className="copy-btn"
-              onClick={() => copy(value, key)}
-            >
-              {copied === key ? "✓ Copied" : "⎘ Copy"}
-            </button>
-          </div>
-          <textarea
-            className="output-textarea"
-            rows={rows}
-            defaultValue={value}
-          />
-        </div>
-      ))}
-
-      <style>{`
-        /* Output panel base */
-        .output-panel {
-          background: #ffffff;
-          border: 1px solid #d5e8d4;
-          border-radius: 14px;
-          padding: 1.75rem;
-          height: 100%;
-          box-sizing: border-box;
-        }
-        .output-panel--empty, .output-panel--loading {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          min-height: 420px;
-        }
-
-        /* Empty */
-        .empty-state { text-align: center; max-width: 280px; }
-        .empty-icon { font-size: 3rem; display: block; margin-bottom: 1rem; }
-        .empty-title { font-size: 1.05rem; font-weight: 700; color: #1a3a2a; margin: 0 0 0.5rem; }
-        .empty-body { font-size: 0.875rem; color: #6b9e82; margin: 0; line-height: 1.6; }
-
-        /* Loading */
-        .loading-state { text-align: center; margin-bottom: 1.5rem; }
-        .loading-spinner {
-          width: 2.5rem; height: 2.5rem;
-          border: 3px solid #d5e8d4;
-          border-top-color: #2d6a4f;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-          margin: 0 auto 1rem;
-        }
-        .loading-text { font-size: 1rem; font-weight: 700; color: #1a3a2a; margin: 0 0 0.3rem; }
-        .loading-sub { font-size: 0.8rem; color: #6b9e82; margin: 0; }
-        .skeleton {
-          height: 14px;
-          background: linear-gradient(90deg, #e8f5ee 25%, #d5e8d4 50%, #e8f5ee 75%);
-          background-size: 200% 100%;
-          animation: shimmer 1.4s infinite;
-          border-radius: 6px;
-          width: 100%;
-        }
-        @keyframes shimmer { to { background-position: -200% 0; } }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Output header */
-        .output-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 1.25rem;
-        }
-        .output-title {
-          font-size: 1.15rem;
-          font-weight: 800;
-          color: #1a3a2a;
-          margin: 0;
-        }
-        .copy-all-btn {
-          padding: 0.4rem 0.875rem;
-          background: #2d6a4f;
-          color: #fff;
-          border: none;
-          border-radius: 7px;
-          font-size: 0.8rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: background 0.14s;
-        }
-        .copy-all-btn:hover { background: #1a4a34; }
-
-        /* Sections */
-        .output-section { margin-bottom: 1rem; }
-        .section-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 0.35rem;
-        }
-        .section-label {
-          font-size: 0.8rem;
-          font-weight: 700;
-          color: #4a7c5e;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-        .copy-btn {
-          background: none;
-          border: 1px solid #c8dfc8;
-          color: #4a7c5e;
-          font-size: 0.75rem;
-          font-weight: 600;
-          padding: 0.2rem 0.6rem;
-          border-radius: 5px;
-          cursor: pointer;
-          transition: background 0.12s, color 0.12s;
-        }
-        .copy-btn:hover { background: #f0faf4; color: #1a3a2a; }
-
-        .output-textarea {
-          width: 100%;
-          padding: 0.6rem 0.875rem;
-          font-size: 0.875rem;
-          color: #1a3a2a;
-          background: #f7faf8;
-          border: 1.5px solid #d5e8d4;
-          border-radius: 8px;
-          resize: vertical;
-          font-family: inherit;
-          line-height: 1.6;
-          box-sizing: border-box;
-          transition: border-color 0.15s;
-        }
-        .output-textarea:focus {
-          outline: none;
-          border-color: #2d6a4f;
-          background: #fff;
-        }
-      `}</style>
-    </div>
-  );
-}
-
 // ── Main Generator Page ──────────────────────────────────────────────────────
 export default function Generator() {
-  const [formData, setFormData]     = useState(INITIAL_FORM);
-  const [errors, setErrors]         = useState({});
-  const [isLoading, setIsLoading]   = useState(false);
-  const [output, setOutput]         = useState(null);
+  const [formData, setFormData]   = useState(INITIAL_FORM);
+  const [errors, setErrors]       = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [output, setOutput]       = useState(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [activeTab, setActiveTab] = useState("content"); // mobile tab: content | preview
 
   const handleSubmit = async () => {
     const foundErrors = validate(formData);
     if (Object.keys(foundErrors).length > 0) {
       setErrors(foundErrors);
-      // Scroll to first error on mobile
-      const firstError = document.querySelector(".field-input--error, .field-error");
+      const firstError = document.querySelector(".hsif__input--error, .hssf__select--error, .field-input--error");
       if (firstError) firstError.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
@@ -318,20 +103,36 @@ export default function Generator() {
   };
 
   return (
-    <div className="page-wrapper">
+    <div className="gen-page">
       <Navbar />
 
-      <main className="generator-main">
-        <div className="generator-header">
-          <h1 className="page-title">AI Description Generator</h1>
-          <p className="page-subtitle">
+      <main className="gen-main">
+        <div className="gen-header">
+          <h1 className="gen-title">AI Description Generator</h1>
+          <p className="gen-subtitle">
             Enter your HimShakti product details and get platform-optimised content instantly
           </p>
         </div>
 
-        <div className="generator-grid">
+        {/* Mobile tab switcher — shows form vs output/preview */}
+        <div className="gen-mobile-tabs">
+          <button
+            className={`gen-tab ${activeTab === "content" ? "gen-tab--active" : ""}`}
+            onClick={() => setActiveTab("content")}
+          >
+            ✏️ Output
+          </button>
+          <button
+            className={`gen-tab ${activeTab === "preview" ? "gen-tab--active" : ""}`}
+            onClick={() => setActiveTab("preview")}
+          >
+            🛒 Preview
+          </button>
+        </div>
+
+        <div className="gen-grid">
           {/* Left — Input Form */}
-          <section className="form-column">
+          <section className="gen-col gen-col--form">
             <ProductForm
               formData={formData}
               onChange={setFormData}
@@ -341,71 +142,78 @@ export default function Generator() {
             />
           </section>
 
-          {/* Right — Output Panel */}
-          <section className="output-column">
-            <OutputPanel
-              output={output}
-              isLoading={isLoading}
-              hasSubmitted={hasSubmitted}
-            />
+          {/* Right — Output + Preview stacked */}
+          <section className="gen-col gen-col--right">
+            <div className={`gen-right-block ${activeTab === "content" ? "gen-right-block--show" : ""}`}>
+              <OutputEditor
+                output={output}
+                isLoading={isLoading}
+                onRegenerate={handleSubmit}
+              />
+            </div>
+
+            <div className={`gen-right-block ${activeTab === "preview" ? "gen-right-block--show" : ""}`}>
+              <PreviewCard formData={formData} output={output} />
+            </div>
           </section>
         </div>
       </main>
 
+      <Footer />
+
       <style>{`
-        * { box-sizing: border-box; }
-
-        body {
-          margin: 0;
-          font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        .gen-page {
+          min-height: 100vh; display: flex; flex-direction: column;
           background: #f4f9f6;
-          color: #1a3a2a;
+          font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
         }
 
-        .page-wrapper { min-height: 100vh; }
-
-        .generator-main {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 2rem 1.25rem 3rem;
+        .gen-main {
+          flex: 1; max-width: 1300px; margin: 0 auto;
+          padding: 2rem 1.25rem 3rem; width: 100%;
         }
 
-        .generator-header {
-          text-align: center;
-          margin-bottom: 2rem;
+        .gen-header { text-align: center; margin-bottom: 1.5rem; }
+        .gen-title {
+          font-size: 1.75rem; font-weight: 800; color: #1a3a2a;
+          margin: 0 0 .5rem; letter-spacing: -.02em;
         }
-        .page-title {
-          font-size: 1.75rem;
-          font-weight: 800;
-          color: #1a3a2a;
-          margin: 0 0 0.5rem;
-          letter-spacing: -0.02em;
-        }
-        .page-subtitle {
-          font-size: 0.95rem;
-          color: #6b9e82;
-          margin: 0;
-        }
+        .gen-subtitle { font-size: .95rem; color: #6b9e82; margin: 0; }
 
-        .generator-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.5rem;
-          align-items: start;
-        }
+        /* Mobile tabs — hidden on desktop */
+        .gen-mobile-tabs { display: none; }
 
-        /* Responsive: stack on tablet/mobile */
-        @media (max-width: 900px) {
-          .generator-grid {
-            grid-template-columns: 1fr;
+        /* Grid layout */
+        .gen-grid {
+          display: grid; grid-template-columns: 1fr 1.05fr;
+          gap: 1.5rem; align-items: start;
+        }
+        .gen-col--right { display: flex; flex-direction: column; gap: 1.5rem; }
+
+        /* Responsive: stack + tab switcher on mobile */
+        @media (max-width: 980px) {
+          .gen-grid { grid-template-columns: 1fr; }
+
+          .gen-mobile-tabs {
+            display: flex; gap: .5rem; margin-bottom: 1.25rem;
+            background: #fff; border: 1px solid #d5e8d4;
+            border-radius: 10px; padding: .25rem;
           }
-          .output-column {
-            order: -1; /* show output above form on mobile only when content exists */
+          .gen-tab {
+            flex: 1; padding: .55rem; border: none; background: transparent;
+            border-radius: 8px; font-size: .85rem; font-weight: 700;
+            color: #6b9e82; cursor: pointer; transition: all .15s;
           }
+          .gen-tab--active { background: #2d6a4f; color: #fff; }
+
+          /* Only show the active right-block on mobile */
+          .gen-right-block { display: none; }
+          .gen-right-block--show { display: block; }
         }
+
         @media (max-width: 520px) {
-          .generator-main { padding: 1rem 0.875rem 2rem; }
-          .page-title { font-size: 1.4rem; }
+          .gen-main { padding: 1rem .875rem 2rem; }
+          .gen-title { font-size: 1.4rem; }
         }
       `}</style>
     </div>

@@ -1,0 +1,92 @@
+/* tokens.css
+   HimShakti design tokens — colours, radii, shadows, spacing.
+   Import this once in main.jsx:  import './styles/tokens.css'
+*/
+
+:root {
+    /* ── Brand Colours ── */
+    --color-primary:      #2d6a4f;   /* Forest green — primary actions, headings */
+    --color-primary-dark: #1b4d38;   /* Hover / pressed state for primary */
+    --color-primary-light:#edf7f1;   /* Light green backgrounds, chips */
+  
+    --color-accent:       #f4a261;   /* Saffron — CTAs, highlights */
+    --color-accent-dark:  #e08a45;
+  
+    --color-mountain:     #457b9d;   /* Mountain blue — secondary accents */
+  
+    /* ── Backgrounds ── */
+    --color-bg:           #f4f9f6;   /* Page background */
+    --color-bg-alt:       #edf7f1;   /* Alternating section background */
+    --color-surface:      #ffffff;   /* Cards, panels */
+  
+    /* ── Text ── */
+    --color-text:         #1a3a2a;   /* Headings, primary text */
+    --color-muted:        #4a7c5e;   /* Body text */
+    --color-subtle:       #6b9e82;   /* Secondary / helper text */
+    --color-placeholder:  #7a9e8a;
+  
+    /* ── Borders ── */
+    --color-border:       #d5e8d4;
+    --color-border-strong:#b5d9c5;
+  
+    /* ── Status Colours ── */
+    --color-error:        #c0392b;
+    --color-error-bg:     #fff8f8;
+    --color-success:      #2d6a4f;
+    --color-warning:      #f4a261;
+  
+    /* ── Radii ── */
+    --radius-sm:   6px;
+    --radius-md:   9px;
+    --radius-lg:   12px;
+    --radius-card: 14px;
+    --radius-pill: 999px;
+  
+    /* ── Shadows ── */
+    --shadow-sm:   0 1px 4px rgba(45,106,79,.06);
+    --shadow-card: 0 2px 12px rgba(45,106,79,.07);
+    --shadow-hover:0 8px 24px rgba(45,106,79,.12);
+    --shadow-cta:  0 4px 16px rgba(45,106,79,.3);
+  
+    /* ── Spacing scale ── */
+    --space-xs:  .25rem;
+    --space-sm:  .5rem;
+    --space-md:  1rem;
+    --space-lg:  1.5rem;
+    --space-xl:  2rem;
+    --space-2xl: 3rem;
+  
+    /* ── Typography ── */
+    --font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    --fw-regular: 400;
+    --fw-medium:  500;
+    --fw-semibold:600;
+    --fw-bold:    700;
+    --fw-extra:   800;
+    --fw-black:   900;
+  
+    /* ── Transitions ── */
+    --transition-fast: 0.12s ease;
+    --transition-base: 0.15s ease;
+    --transition-slow: 0.25s ease;
+  }
+  
+  /* ── Base reset using tokens ── */
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    font-family: var(--font-family);
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+  
+  /* Utility classes (optional — use where helpful) */
+  .surface       { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+  .text-muted    { color: var(--color-muted); }
+  .text-subtle   { color: var(--color-subtle); }
+  .bg-alt        { background: var(--color-bg-alt); }
+  .pill          { border-radius: var(--radius-pill); }
+  
