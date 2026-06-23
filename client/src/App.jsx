@@ -1,14 +1,15 @@
 // App.jsx
-// Root component — sets up React Router with all page routes.
-// Install react-router-dom first: npm install react-router-dom
+// React Router setup — defines all page routes for the app.
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Home      from "./pages/Home";
+import Generator from "./pages/Generator";
 import About     from "./pages/About";
 import Dashboard from "./pages/Dashboard";
 import Login     from "./pages/Login";
-import Generator from "./pages/Generator";   // your existing Week 2 page
+import Register  from "./pages/Register";
+import Saved     from "./pages/Saved";
 
 export default function App() {
   return (
@@ -19,13 +20,20 @@ export default function App() {
         <Route path="/about"     element={<About />}     />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login"     element={<Login />}     />
+        <Route path="/register"  element={<Register />}  />
+        <Route path="/saved"     element={<Saved />}     />
 
         {/* 404 fallback */}
         <Route path="*" element={
           <div style={{
-            minHeight: "100vh", display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            fontFamily: "system-ui", background: "#f4f9f6", color: "#1a3a2a"
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            fontFamily: "system-ui",
+            background: "#f4f9f6",
+            color: "#1a3a2a",
           }}>
             <span style={{ fontSize: "3rem" }}>🏔</span>
             <h1 style={{ margin: ".5rem 0" }}>404 — Page Not Found</h1>
