@@ -1,26 +1,30 @@
-// Generator.jsx (Week 3 update)
-// Main Generator page — now uses OutputEditor and PreviewCard components.
+// Generator.jsx (Week 4 update)
+// Now uses real Axios API calls to the Express backend.
+// Shows Loader while generating, Toast on errors.
 
 import { useState } from "react";
-import ProductForm from "../components/ProductForm";
-import OutputEditor from "../components/OutputEditor";
-import PreviewCard from "../components/PreviewCard";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import ProductForm   from "../components/ProductForm";
+import OutputEditor  from "../components/OutputEditor";
+import PreviewCard   from "../components/PreviewCard";
+import Navbar        from "../components/Navbar";
+import Footer        from "../components/Footer";
+import Loader        from "../components/Loader";
+import { useToast }  from "../components/Toast";
+import { generateDescription, saveProduct } from "../services/api";
 
-// ── Initial form state ──────────────────────────────────────────────────────
+// ── Initial form state ──────────────────────────────────────────────────
 const INITIAL_FORM = {
   productName: "",
   ingredients: "",
-  category: "",
-  weight: "",
-  features: "",
-  tone: "Health-focused",
-  platforms: [],
-  keywords: "",
+  category:    "",
+  weight:      "",
+  features:    "",
+  tone:        "Health-focused",
+  platforms:   [],
+  keywords:    "",
 };
 
-// ── Validation ──────────────────────────────────────────────────────────────
+// ── Validation ──────────────────────────────────────────────────────────
 function validate(form) {
   const errors = {};
   if (!form.productName || form.productName.trim().length < 3)
@@ -40,65 +44,111 @@ function validate(form) {
   return errors;
 }
 
-// ── Mock AI output (replace with real API call in Week 7) ───────────────────
-function mockGenerate(form) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        title: `${form.productName} | ${form.category} | ${form.weight}`,
-        shortDesc: `A premium Himalayan product crafted from ${form.ingredients.split(",")[0].trim()} and other natural ingredients. Perfect for the health-conscious consumer seeking authentic Pahadi flavours.`,
-        longDesc: `Introducing ${form.productName} — a ${form.tone.toLowerCase()} offering from the heart of Uttarakhand. Made with ${form.ingredients}, this product embodies the rich culinary heritage of the Himalayas. ${form.features}. Ideal for all age groups and available on ${form.platforms.join(", ")}.`,
-        bullets: [
-          `✔ Made with ${form.ingredients.split(",")[0].trim()} sourced from Himalayan farms`,
-          `✔ ${form.features.split(",")[0].trim()}`,
-          "✔ No artificial preservatives or colours",
-          "✔ Traditional Pahadi recipe — authentic mountain taste",
-          "✔ Suitable for health-conscious snackers and families",
-        ],
-        keywords: [
-          form.productName.toLowerCase(),
-          "Himalayan food",
-          "Uttarakhand products",
-          "natural ingredients",
-          "Pahadi food",
-          ...(form.keywords ? form.keywords.split(",").map((k) => k.trim()) : []),
-        ].slice(0, 10),
-        usage: `Store in a cool, dry place away from direct sunlight. Best consumed within 30 days of opening. Reseal the pack after each use to retain freshness.`,
-      });
-    }, 1800);
-  });
-}
-
-// ── Main Generator Page ──────────────────────────────────────────────────────
+// ── Main Generator Page ─────────────────────────────────────────────────
 export default function Generator() {
-  const [formData, setFormData]   = useState(INITIAL_FORM);
-  const [errors, setErrors]       = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [output, setOutput]       = useState(null);
+  const [formData, setFormData]         = useState(INITIAL_FORM);
+  const [errors, setErrors]             = useState({});
+  const [isLoading, setIsLoading]       = useState(false);
+  const [isSaving, setIsSaving]         = useState(false);
+  const [output, setOutput]             = useState(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [activeTab, setActiveTab] = useState("content"); // mobile tab: content | preview
+  const [activeTab, setActiveTab]       = useState("content");
 
+  const { showToast } = useToast();
+
+  // ── Generate ──────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     const foundErrors = validate(formData);
     if (Object.keys(foundErrors).length > 0) {
       setErrors(foundErrors);
-      const firstError = document.querySelector(".hsif__input--error, .hssf__select--error, .field-input--error");
+      const firstError = document.querySelector(
+        ".hsif__input--error, .hssf__select--error, .field-input--error"
+      );
       if (firstError) firstError.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
+
     setErrors({});
     setIsLoading(true);
     setHasSubmitted(true);
     setOutput(null);
 
     try {
-      // ── Replace mockGenerate() with real API call in Week 7 ──
-      const result = await mockGenerate(formData);
-      setOutput(result);
+      // ── Real API call to Express backend ──────────────────────────────
+      const response = await generateDescription({
+        productName: formData.productName,
+        ingredients: formData.ingredients,
+        weight:      formData.weight,
+        category:    formData.category,
+        features:    formData.features,
+        platform:    formData.platforms[0] || "Amazon",
+        tone:        formData.tone,
+        keywords:    formData.keywords,
+      });
+
+      // Map backend response fields to OutputEditor expected shape
+      const data = response.data;
+      setOutput({
+        title:     data.title,
+        shortDesc: data.shortDescription,
+        longDesc:  data.longDescription,
+        bullets:   data.bulletPoints,
+        keywords:  data.keywords,
+        usage:     data.usage,
+      });
+
+      showToast("Description generated successfully!", "success");
+
     } catch (err) {
       console.error("Generation failed:", err);
+
+      if (err.response) {
+        // Server responded with error
+        showToast(
+          err.response.data?.error || "Generation failed. Please try again.",
+          "error"
+        );
+      } else if (err.request) {
+        // No response — backend not running
+        showToast(
+          "Cannot connect to server. Make sure the backend is running on port 5000.",
+          "error",
+          5000
+        );
+      } else {
+        showToast("Something went wrong. Please try again.", "error");
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ── Save listing ──────────────────────────────────────────────────────
+  const handleSave = async () => {
+    if (!output) {
+      showToast("Generate a description first before saving.", "warning");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await saveProduct({
+        productName: formData.productName,
+        category:    formData.category,
+        weight:      formData.weight,
+        tone:        formData.tone,
+        platforms:   formData.platforms,
+        ingredients: formData.ingredients,
+        features:    formData.features,
+        keywords:    formData.keywords,
+        output,
+      });
+      showToast("Listing saved successfully!", "success");
+    } catch (err) {
+      console.error("Save failed:", err);
+      showToast("Failed to save listing. Please try again.", "error");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -114,7 +164,7 @@ export default function Generator() {
           </p>
         </div>
 
-        {/* Mobile tab switcher — shows form vs output/preview */}
+        {/* Mobile tab switcher */}
         <div className="gen-mobile-tabs">
           <button
             className={`gen-tab ${activeTab === "content" ? "gen-tab--active" : ""}`}
@@ -140,9 +190,24 @@ export default function Generator() {
               onSubmit={handleSubmit}
               isLoading={isLoading}
             />
+
+            {/* Save button — shows after output generated */}
+            {output && (
+              <button
+                className="gen-save-btn"
+                onClick={handleSave}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <><Loader type="spinner" size="sm" /> Saving…</>
+                ) : (
+                  "💾 Save This Listing"
+                )}
+              </button>
+            )}
           </section>
 
-          {/* Right — Output + Preview stacked */}
+          {/* Right — Output + Preview */}
           <section className="gen-col gen-col--right">
             <div className={`gen-right-block ${activeTab === "content" ? "gen-right-block--show" : ""}`}>
               <OutputEditor
@@ -151,7 +216,6 @@ export default function Generator() {
                 onRegenerate={handleSubmit}
               />
             </div>
-
             <div className={`gen-right-block ${activeTab === "preview" ? "gen-right-block--show" : ""}`}>
               <PreviewCard formData={formData} output={output} />
             </div>
@@ -167,12 +231,10 @@ export default function Generator() {
           background: #f4f9f6;
           font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
         }
-
         .gen-main {
           flex: 1; max-width: 1300px; margin: 0 auto;
           padding: 2rem 1.25rem 3rem; width: 100%;
         }
-
         .gen-header { text-align: center; margin-bottom: 1.5rem; }
         .gen-title {
           font-size: 1.75rem; font-weight: 800; color: #1a3a2a;
@@ -180,20 +242,30 @@ export default function Generator() {
         }
         .gen-subtitle { font-size: .95rem; color: #6b9e82; margin: 0; }
 
-        /* Mobile tabs — hidden on desktop */
         .gen-mobile-tabs { display: none; }
 
-        /* Grid layout */
         .gen-grid {
           display: grid; grid-template-columns: 1fr 1.05fr;
           gap: 1.5rem; align-items: start;
         }
         .gen-col--right { display: flex; flex-direction: column; gap: 1.5rem; }
 
-        /* Responsive: stack + tab switcher on mobile */
+        /* Save button */
+        .gen-save-btn {
+          width: 100%; margin-top: .875rem;
+          padding: .75rem; border: 2px solid #2d6a4f;
+          background: transparent; color: #2d6a4f;
+          font-size: .95rem; font-weight: 700;
+          border-radius: 10px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center; gap: .5rem;
+          transition: background .15s, color .15s;
+          font-family: inherit;
+        }
+        .gen-save-btn:hover:not(:disabled) { background: #edf7f1; }
+        .gen-save-btn:disabled { opacity: .6; cursor: not-allowed; }
+
         @media (max-width: 980px) {
           .gen-grid { grid-template-columns: 1fr; }
-
           .gen-mobile-tabs {
             display: flex; gap: .5rem; margin-bottom: 1.25rem;
             background: #fff; border: 1px solid #d5e8d4;
@@ -205,12 +277,9 @@ export default function Generator() {
             color: #6b9e82; cursor: pointer; transition: all .15s;
           }
           .gen-tab--active { background: #2d6a4f; color: #fff; }
-
-          /* Only show the active right-block on mobile */
           .gen-right-block { display: none; }
           .gen-right-block--show { display: block; }
         }
-
         @media (max-width: 520px) {
           .gen-main { padding: 1rem .875rem 2rem; }
           .gen-title { font-size: 1.4rem; }

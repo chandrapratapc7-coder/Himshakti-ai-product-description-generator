@@ -1,91 +1,282 @@
 /* tokens.css
-   HimShakti design tokens — colours, radii, shadows, spacing.
-   Import this once in main.jsx:  import './styles/tokens.css'
+   HimShakti design tokens — light + dark mode.
+   Import once in main.jsx: import './styles/tokens.css'
 */
 
+/* ── Light Mode Variables ─────────────────────────────────────────────── */
 :root {
-  /* ── Brand Colours ── */
-  --color-primary:      #2d6a4f;   /* Forest green — primary actions, headings */
-  --color-primary-dark: #1b4d38;   /* Hover / pressed state for primary */
-  --color-primary-light:#edf7f1;   /* Light green backgrounds, chips */
-
-  --color-accent:       #f4a261;   /* Saffron — CTAs, highlights */
-  --color-accent-dark:  #e08a45;
-
-  --color-mountain:     #457b9d;   /* Mountain blue — secondary accents */
-
-  /* ── Backgrounds ── */
-  --color-bg:           #f4f9f6;   /* Page background */
-  --color-bg-alt:       #edf7f1;   /* Alternating section background */
-  --color-surface:      #ffffff;   /* Cards, panels */
-
-  /* ── Text ── */
-  --color-text:         #1a3a2a;   /* Headings, primary text */
-  --color-muted:        #4a7c5e;   /* Body text */
-  --color-subtle:       #6b9e82;   /* Secondary / helper text */
-  --color-placeholder:  #7a9e8a;
-
-  /* ── Borders ── */
-  --color-border:       #d5e8d4;
-  --color-border-strong:#b5d9c5;
-
-  /* ── Status Colours ── */
-  --color-error:        #c0392b;
-  --color-error-bg:     #fff8f8;
-  --color-success:      #2d6a4f;
-  --color-warning:      #f4a261;
-
-  /* ── Radii ── */
+  --color-primary:       #2d6a4f;
+  --color-primary-dark:  #1b4d38;
+  --color-primary-light: #edf7f1;
+  --color-accent:        #f4a261;
+  --color-mountain:      #457b9d;
+  --color-bg:            #f4f9f6;
+  --color-bg-alt:        #edf7f1;
+  --color-surface:       #ffffff;
+  --color-surface-alt:   #f7faf8;
+  --color-text:          #1a3a2a;
+  --color-muted:         #4a7c5e;
+  --color-subtle:        #6b9e82;
+  --color-border:        #d5e8d4;
+  --color-border-strong: #b5d9c5;
+  --color-error:         #c0392b;
+  --color-error-bg:      #fff8f8;
   --radius-sm:   6px;
   --radius-md:   9px;
   --radius-lg:   12px;
   --radius-card: 14px;
   --radius-pill: 999px;
-
-  /* ── Shadows ── */
-  --shadow-sm:   0 1px 4px rgba(45,106,79,.06);
-  --shadow-card: 0 2px 12px rgba(45,106,79,.07);
-  --shadow-hover:0 8px 24px rgba(45,106,79,.12);
-  --shadow-cta:  0 4px 16px rgba(45,106,79,.3);
-
-  /* ── Spacing scale ── */
-  --space-xs:  .25rem;
-  --space-sm:  .5rem;
-  --space-md:  1rem;
-  --space-lg:  1.5rem;
-  --space-xl:  2rem;
-  --space-2xl: 3rem;
-
-  /* ── Typography ── */
-  --font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-  --fw-regular: 400;
-  --fw-medium:  500;
-  --fw-semibold:600;
-  --fw-bold:    700;
-  --fw-extra:   800;
-  --fw-black:   900;
-
-  /* ── Transitions ── */
-  --transition-fast: 0.12s ease;
-  --transition-base: 0.15s ease;
-  --transition-slow: 0.25s ease;
+  --shadow-card:  0 2px 12px rgba(45,106,79,.07);
+  --shadow-hover: 0 8px 24px rgba(45,106,79,.12);
+  --font-family:  'Inter', 'Segoe UI', system-ui, sans-serif;
+  --transition-base: .15s ease;
+  --transition-slow: .25s ease;
 }
 
-/* ── Base reset using tokens ── */
-* {
-  box-sizing: border-box;
-}
+/* ── Base reset ───────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
   font-family: var(--font-family);
   background: var(--color-bg);
   color: var(--color-text);
+  transition: background var(--transition-slow), color var(--transition-slow);
 }
 
-/* Utility classes (optional — use where helpful) */
-.surface       { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
-.text-muted    { color: var(--color-muted); }
-.text-subtle   { color: var(--color-subtle); }
-.bg-alt        { background: var(--color-bg-alt); }
-.pill          { border-radius: var(--radius-pill); }
+/* ══════════════════════════════════════════════════════════════════════
+   DARK MODE — full site overrides
+   Applied when ThemeContext adds class="dark" to <html>
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── CSS variable overrides ── */
+.dark {
+  --color-bg:            #0b1e14;
+  --color-bg-alt:        #0f2419;
+  --color-surface:       #132d1e;
+  --color-surface-alt:   #1a3a2a;
+  --color-text:          #e0f2e9;
+  --color-muted:         #a8d8b4;
+  --color-subtle:        #7dcca0;
+  --color-border:        #1f4a30;
+  --color-border-strong: #2d6a4f;
+  --color-primary:       #4a9b6f;
+  --color-primary-light: #1a3a2a;
+  --color-error-bg:      #2d1515;
+  --shadow-card:  0 2px 12px rgba(0,0,0,.35);
+  --shadow-hover: 0 8px 24px rgba(0,0,0,.45);
+}
+
+/* ── Body & page backgrounds ── */
+.dark body                { background: #0b1e14; color: #e0f2e9; }
+.dark .home-page,
+.dark .about-page,
+.dark .saved-page,
+.dark .register-page,
+.dark .login-page,
+.dark .dash-page,
+.dark .gen-page           { background: #0b1e14; }
+
+/* ── Sections ── */
+.dark .home-section       { background: #0b1e14; }
+.dark .home-section--alt  { background: #0f2419; }
+.dark .hero-section       { background: linear-gradient(160deg,#0f2419,#132d1e,#0b1e14); border-bottom-color: #1f4a30; }
+.dark .home-cta-banner    { background: linear-gradient(135deg,#0b1e14,#132d1e); }
+
+/* ── Cards ── */
+.dark .hs-card,
+.dark .about-block,
+.dark .about-tech,
+.dark .dash-stat-card,
+.dark .dash-placeholder,
+.dark .home-step,
+.dark .sl-card,
+.dark .login-card,
+.dark .register-card,
+.dark .product-form,
+.dark .output-panel       {
+  background: #132d1e;
+  border-color: #1f4a30;
+  box-shadow: 0 2px 12px rgba(0,0,0,.3);
+}
+
+.dark .dash-placeholder   { border-color: #2d6a4f; }
+.dark .saved-empty        { background: #132d1e; border-color: #2d6a4f; }
+
+/* ── Text ── */
+.dark .home-section__title,
+.dark .page-title,
+.dark .form-title,
+.dark .oe-topbar__title,
+.dark .hs-card__title,
+.dark .about-block__title,
+.dark .dash-placeholder__title,
+.dark .saved-empty__title,
+.dark .sl-card__title,
+.dark .brand-name,
+.dark .gen-title,
+.dark .hero-title,
+.dark .dash-stat__value,
+.dark .empty-title         { color: #e0f2e9; }
+
+.dark .home-section__subtitle,
+.dark .page-subtitle,
+.dark .form-subtitle,
+.dark .oe-topbar__sub,
+.dark .hs-card__body,
+.dark .about-block__text,
+.dark .hero-subtitle,
+.dark .dash-placeholder__body,
+.dark .saved-empty__body,
+.dark .gen-subtitle,
+.dark .sl-preview,
+.dark .sl-section__text,
+.dark .sl-bullets,
+.dark .pc-shortdesc,
+.dark .dash-stat__label,
+.dark .dash-stat__note,
+.dark .sl-card__date        { color: #a8d8b4; }
+
+.dark .home-section__eyebrow,
+.dark .page-eyebrow,
+.dark .brand-tagline,
+.dark .oe-section__label,
+.dark .sl-section__label    { color: #4a9b6f; }
+
+/* ── Inputs ── */
+.dark .field-input,
+.dark .hsif__input,
+.dark .hssf__select,
+.dark .lf-input,
+.dark .rf-input             {
+  background: #0f2419;
+  border-color: #1f4a30;
+  color: #e0f2e9;
+}
+.dark .field-input:focus,
+.dark .hsif__input:focus,
+.dark .hssf__select:focus   {
+  border-color: #4a9b6f;
+  background: #132d1e;
+  box-shadow: 0 0 0 3px rgba(74,155,111,.15);
+}
+
+/* ── Output editor sections ── */
+.dark .oe-section            { border-color: #1f4a30; }
+.dark .oe-section__head      { background: #0f2419; border-bottom-color: #1f4a30; }
+.dark .oe-textarea           { background: #132d1e; color: #e0f2e9; border-color: #1f4a30; }
+.dark .oe-textarea:focus     { border-color: #4a9b6f; background: #1a3a2a; }
+.dark .output-panel--empty,
+.dark .output-panel--loading { background: #132d1e; }
+.dark .oe-topbar             { border-bottom-color: #1f4a30; }
+
+/* ── Chips, pills, badges ── */
+.dark .sl-chip               { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
+.dark .sl-chip--tone         { background: #1a3a2a; color: #4a9b6f; }
+.dark .about-tech__pill      { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
+.dark .hero-badge            { background: #1a3a2a; border-color: #2d6a4f; color: #7dcca0; }
+.dark .home-section__eyebrow { background: #1a3a2a; }
+.dark .page-eyebrow          { background: #1a3a2a; }
+.dark .dash-stat-card        { border-top-color: #4a9b6f; }
+.dark .oe-copy-btn           { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
+.dark .oe-copy-btn:hover     { background: #132d1e; color: #e0f2e9; }
+
+/* ── Mobile tab switcher (Generator page) ── */
+.dark .gen-mobile-tabs       { background: #132d1e; border-color: #1f4a30; }
+.dark .gen-tab               { color: #7dcca0; }
+.dark .gen-tab--active       { background: #2d6a4f; color: #fff; }
+
+/* ── Tone selector ── */
+.dark .tone-card             { background: #132d1e; border-color: #1f4a30; }
+.dark .tone-card:hover       { border-color: #4a9b6f; }
+.dark .tone-card--selected   { background: #1a3a2a; border-color: #4a9b6f; }
+.dark .tone-label            { color: #e0f2e9; }
+.dark .tone-description      { color: #7dcca0; }
+
+/* ── Platform selector ── */
+.dark .platform-pill         { background: #132d1e; border-color: #1f4a30; color: #7dcca0; }
+.dark .platform-header .field-label,
+.dark .tone-selector-wrapper .field-label,
+.dark .field-label,
+.dark .hsif__label,
+.dark .hssf__label,
+.dark .lf-label,
+.dark .rf-label              { color: #e0f2e9; }
+
+/* ── Preview card ── */
+.dark .pc-frame              { border-color: #1f4a30; background: #132d1e; }
+.dark .pc-frame__topbar      { background: #0f2419; border-bottom-color: #1f4a30; }
+.dark .pc-listing            { background: #132d1e; }
+.dark .pc-title              { color: #e0f2e9; }
+.dark .pc-image              { background: linear-gradient(135deg,#1a3a2a,#132d1e); border-color: #2d6a4f; }
+.dark .pc-keywords           { background: #0f2419; border-top-color: #1f4a30; }
+.dark .pc-keyword            { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
+.dark .pc-delivery           { color: #7dcca0; }
+.dark .pc-btn--cart          { background: #1a3a2a; color: #a8d8b4; border-color: #1f4a30; }
+.dark .pc-price              { color: #e0f2e9; }
+
+/* ── Section card (SectionCard.jsx) ── */
+.dark .hscard                { background: #132d1e; border-color: #1f4a30; }
+.dark .hscard__title         { color: #e0f2e9; }
+.dark .hscard__subtitle      { color: #7dcca0; }
+
+/* ── Steps (How it works) ── */
+.dark .home-step             { background: #132d1e; border-color: #1f4a30; }
+.dark .home-step__title      { color: #e0f2e9; }
+.dark .home-step__desc       { color: #a8d8b4; }
+
+/* ── About page ── */
+.dark .about-main,
+.dark .dash-main,
+.dark .saved-main,
+.dark .login-main,
+.dark .register-main,
+.dark .gen-main              { background: #0b1e14; }
+
+/* ── Dashboard stats ── */
+.dark .dash-stat__value      { color: #e0f2e9; }
+
+/* ── Login / Register notices ── */
+.dark .login-notice,
+.dark .register-notice       { background: #2a1e0a; border-color: #8a5a1a; color: #f4d4a0; }
+.dark .login-title,
+.dark .register-title        { color: #e0f2e9; }
+.dark .login-subtitle,
+.dark .register-subtitle     { color: #7dcca0; }
+
+/* ── Saved listings ── */
+.dark .sl-full               { border-color: #1f4a30; }
+.dark .sl-section            { border-top-color: #1f4a30; }
+.dark .sl-keyword            { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
+.dark .sl-section__label     { color: #4a9b6f; }
+.dark .saved-header .page-title { color: #e0f2e9; }
+
+/* ── Form (ProductForm) ── */
+.dark .product-form          { background: #2d1313; border-color: #1f4a30; }
+.dark .form-title            { color: #e0f2e9; }
+.dark .form-subtitle         { color: #7dcca0; }
+.dark .field-input--error    { background: #2d1515; border-color: #c0392b; }
+
+/* ── Modal ── */
+.dark .modal-box             { background: #132d1e; border-color: #1f4a30; }
+.dark .modal-header          { border-bottom-color: #1f4a30; }
+.dark .modal-title           { color: #e0f2e9; }
+.dark .modal-body            { color: #a8d8b4; }
+.dark .modal-close           { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
+
+/* ── Empty states ── */
+.dark .empty-title           { color: #e0f2e9; }
+.dark .empty-body            { color: #7dcca0; }
+.dark .loading-text          { color: #e0f2e9; }
+.dark .loading-sub           { color: #7dcca0; }
+
+/* Smooth transitions */
+.dark *,
+.dark *::before,
+.dark *::after {
+  transition:
+    background-color var(--transition-base),
+    border-color var(--transition-base),
+    color var(--transition-base),
+    box-shadow var(--transition-base);
+}

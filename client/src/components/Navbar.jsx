@@ -1,190 +1,196 @@
 // Navbar.jsx
-// Top navigation bar with HimShakti branding and nav links.
+// Top navigation bar with HimShakti branding, nav links, and dark/light toggle.
 
 import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+
+  const navLinks = [
+    { label: "Home",      path: "/"          },
+    { label: "Generator", path: "/generator" },
+    { label: "Saved",     path: "/saved"     },
+    { label: "Dashboard", path: "/dashboard" },
+  ];
+
+  const isActive = (path) =>
+    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
   return (
     <nav className="navbar">
       <div className="navbar-inner">
+
         {/* ── Brand ── */}
-        <a href="/" className="brand">
+        <Link to="/" className="brand">
           <span className="brand-icon">🏔</span>
           <div className="brand-text">
             <span className="brand-name">HimShakti</span>
             <span className="brand-tagline">AI Content Generator</span>
           </div>
-        </a>
+        </Link>
 
         {/* ── Desktop links ── */}
         <ul className="nav-links">
-          <li><a href="/" className="nav-link">Home</a></li>
-          <li><a href="/generator" className="nav-link nav-link--active">Generator</a></li>
-          <li><a href="/saved" className="nav-link">Saved</a></li>
-          <li><a href="/dashboard" className="nav-link">Dashboard</a></li>
+          {navLinks.map((link) => (
+            <li key={link.path}>
+              <Link
+                to={link.path}
+                className={`nav-link ${isActive(link.path) ? "nav-link--active" : ""}`}
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
         </ul>
 
-        {/* ── CTA ── */}
-        <a href="/generator" className="nav-cta">
-          ✦ Generate
-        </a>
+        {/* ── Right side: theme toggle + CTA ── */}
+        <div className="nav-right">
+          <ThemeToggle size="sm" />
+          <Link to="/generator" className="nav-cta">
+            ✦ Generate
+          </Link>
+        </div>
 
-        {/* ── Mobile hamburger ── */}
-        <button
-          className="hamburger"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
-        >
-          <span className={`hamburger-line ${menuOpen ? "hamburger-line--open-1" : ""}`} />
-          <span className={`hamburger-line ${menuOpen ? "hamburger-line--open-2" : ""}`} />
-          <span className={`hamburger-line ${menuOpen ? "hamburger-line--open-3" : ""}`} />
-        </button>
+        {/* ── Mobile: theme toggle + hamburger ── */}
+        <div className="nav-mobile-right">
+          <ThemeToggle size="sm" />
+          <button
+            className="hamburger"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span className={`hamburger-line ${menuOpen ? "hamburger-line--open-1" : ""}`} />
+            <span className={`hamburger-line ${menuOpen ? "hamburger-line--open-2" : ""}`} />
+            <span className={`hamburger-line ${menuOpen ? "hamburger-line--open-3" : ""}`} />
+          </button>
+        </div>
       </div>
 
       {/* ── Mobile menu ── */}
       {menuOpen && (
         <div className="mobile-menu">
-          {["Home", "Generator", "Saved", "Dashboard"].map((item) => (
-            <a
-              key={item}
-              href={`/${item === "Home" ? "" : item.toLowerCase()}`}
+          {navLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
               className="mobile-link"
               onClick={() => setMenuOpen(false)}
             >
-              {item}
-            </a>
+              {link.label}
+            </Link>
           ))}
         </div>
       )}
 
       <style>{`
         .navbar {
-          position: sticky;
-          top: 0;
-          z-index: 100;
+          position: sticky; top: 0; z-index: 100;
           background: rgba(255,255,255,0.96);
           backdrop-filter: blur(8px);
           border-bottom: 1px solid #d5e8d4;
           box-shadow: 0 1px 8px rgba(45,106,79,0.07);
+          transition: background .2s, border-color .2s;
         }
+
+        /* Dark mode */
+        .dark .navbar {
+          background: rgba(15,36,25,0.97);
+          border-bottom-color: #1a3a2a;
+          box-shadow: 0 1px 8px rgba(0,0,0,0.3);
+        }
+
         .navbar-inner {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 1.25rem;
-          height: 62px;
-          display: flex;
-          align-items: center;
-          gap: 2rem;
+          max-width: 1200px; margin: 0 auto;
+          padding: 0 1.25rem; height: 62px;
+          display: flex; align-items: center; gap: 1.5rem;
         }
 
         /* Brand */
         .brand {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          text-decoration: none;
-          flex-shrink: 0;
+          display: flex; align-items: center; gap: .6rem;
+          text-decoration: none; flex-shrink: 0;
         }
         .brand-icon { font-size: 1.6rem; }
         .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
         .brand-name {
-          font-size: 1.05rem;
-          font-weight: 800;
-          color: #1a3a2a;
-          letter-spacing: -0.01em;
+          font-size: 1.05rem; font-weight: 800; color: #1a3a2a; letter-spacing: -.01em;
         }
+        .dark .brand-name { color: #e0f2e9; }
         .brand-tagline {
-          font-size: 0.65rem;
-          color: #6b9e82;
-          font-weight: 500;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
+          font-size: .65rem; color: #6b9e82; font-weight: 500;
+          letter-spacing: .04em; text-transform: uppercase;
         }
 
-        /* Desktop nav */
+        /* Desktop nav links */
         .nav-links {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          flex: 1;
+          display: flex; align-items: center; gap: .25rem;
+          list-style: none; margin: 0; padding: 0; flex: 1;
         }
         .nav-link {
-          padding: 0.4rem 0.75rem;
-          font-size: 0.875rem;
-          font-weight: 600;
-          color: #4a7c5e;
-          text-decoration: none;
-          border-radius: 6px;
-          transition: background 0.14s, color 0.14s;
+          padding: .4rem .75rem; font-size: .875rem; font-weight: 600;
+          color: #4a7c5e; text-decoration: none;
+          border-radius: 6px; transition: background .14s, color .14s;
         }
         .nav-link:hover { background: #f0faf4; color: #1a3a2a; }
-        .nav-link--active {
-          color: #2d6a4f;
-          background: #e8f5ee;
-        }
+        .dark .nav-link { color: #7dcca0; }
+        .dark .nav-link:hover { background: #1a3a2a; color: #e0f2e9; }
+        .nav-link--active { color: #2d6a4f; background: #e8f5ee; }
+        .dark .nav-link--active { color: #7dcca0; background: #1a3a2a; }
 
-        /* CTA */
+        /* Right group */
+        .nav-right {
+          display: flex; align-items: center; gap: .875rem; flex-shrink: 0;
+        }
         .nav-cta {
-          flex-shrink: 0;
-          padding: 0.45rem 1.1rem;
-          background: #2d6a4f;
-          color: #fff;
-          font-size: 0.875rem;
-          font-weight: 700;
-          border-radius: 8px;
-          text-decoration: none;
-          transition: background 0.14s, transform 0.1s;
+          padding: .45rem 1.1rem;
+          background: #2d6a4f; color: #fff;
+          font-size: .875rem; font-weight: 700;
+          border-radius: 8px; text-decoration: none;
+          transition: background .14s, transform .1s;
+          white-space: nowrap;
         }
         .nav-cta:hover { background: #1a4a34; transform: translateY(-1px); }
 
-        /* Hamburger */
+        /* Mobile right group */
+        .nav-mobile-right {
+          display: none; align-items: center; gap: .75rem; margin-left: auto;
+        }
         .hamburger {
-          display: none;
-          flex-direction: column;
-          gap: 5px;
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 4px;
-          margin-left: auto;
+          display: flex; flex-direction: column; gap: 5px;
+          background: none; border: none; cursor: pointer; padding: 4px;
         }
         .hamburger-line {
-          width: 22px;
-          height: 2px;
-          background: #2d6a4f;
-          border-radius: 2px;
-          transition: transform 0.2s, opacity 0.2s;
+          width: 22px; height: 2px; background: #2d6a4f;
+          border-radius: 2px; transition: transform .2s, opacity .2s;
         }
+        .dark .hamburger-line { background: #7dcca0; }
         .hamburger-line--open-1 { transform: translateY(7px) rotate(45deg); }
         .hamburger-line--open-2 { opacity: 0; }
         .hamburger-line--open-3 { transform: translateY(-7px) rotate(-45deg); }
 
-        /* Mobile menu */
+        /* Mobile dropdown menu */
         .mobile-menu {
-          display: flex;
-          flex-direction: column;
+          display: flex; flex-direction: column;
           border-top: 1px solid #d5e8d4;
-          padding: 0.5rem 1.25rem 1rem;
+          padding: .5rem 1.25rem 1rem;
           background: #fff;
         }
+        .dark .mobile-menu { background: #0f2419; border-top-color: #1a3a2a; }
         .mobile-link {
-          padding: 0.7rem 0;
-          font-size: 0.95rem;
-          font-weight: 600;
-          color: #1a3a2a;
-          text-decoration: none;
+          padding: .7rem 0; font-size: .95rem; font-weight: 600;
+          color: #1a3a2a; text-decoration: none;
           border-bottom: 1px solid #edf7f0;
         }
+        .dark .mobile-link { color: #e0f2e9; border-bottom-color: #1a3a2a; }
         .mobile-link:last-child { border-bottom: none; }
 
+        /* Responsive */
         @media (max-width: 768px) {
-          .nav-links, .nav-cta { display: none; }
-          .hamburger { display: flex; }
+          .nav-links, .nav-right { display: none; }
+          .nav-mobile-right { display: flex; }
         }
       `}</style>
     </nav>
