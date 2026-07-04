@@ -1,117 +1,153 @@
 // server/routes/products.js
-// CRUD + Search routes for saved product listings.
-// In-memory storage — will be replaced with MongoDB in Week 5.
-//
-// Endpoints:
-//   GET    /api/products              — list all (with optional ?platform= filter)
-//   GET    /api/products/search?q=   — search by product name / category
-//   GET    /api/products/:id         — get single product
-//   POST   /api/products             — save new product
-//   PUT    /api/products/:id         — update existing product
-//   DELETE /api/products/:id         — remove product
+// CRUD + Search routes using MongoDB via Mongoose.
+// Replaces the previous in-memory array implementation.
 
 const express = require("express");
-const router = express.Router();
+const router  = express.Router();
+const Product = require("../models/Product");
 
-// ── In-memory "database" ─────────────────────────────────────────────────
-let products = [];
+// ── GET /api/products — list all with optional pagination ─────────────────
+router.get("/", async (req, res) => {
+  try {
+    const page     = parseInt(req.query.page)  || 1;
+    const limit    = parseInt(req.query.limit) || 10;
+    const skip     = (page - 1) * limit;
+    const platform = req.query.platform;
 
-// ── GET /api/products — list all, optional ?platform= filter ─────────────
-router.get("/", (req, res) => {
-  const { platform } = req.query;
-  let result = products;
+    const filter = platform ? { platforms: platform } : {};
 
-  if (platform) {
-    result = products.filter((p) =>
-      Array.isArray(p.platforms)
-        ? p.platforms.includes(platform)
-        : p.platform === platform
-    );
+    const [products, total] = await Promise.all([
+      Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Product.countDocuments(filter),
+    ]);
+
+    res.status(200).json({
+      products,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (err) {
+    console.error("GET /products error:", err);
+    res.status(500).json({ error: "Failed to fetch products" });
   }
-
-  res.status(200).json(result);
 });
 
-// ── GET /api/products/search?q= — MUST be before /:id ───────────────────
-router.get("/search", (req, res) => {
-  const { q } = req.query;
+// ── GET /api/products/search?q= — MUST be before /:id ────────────────────
+router.get("/search", async (req, res) => {
+  try {
+    const { q } = req.query;
 
-  if (!q || q.trim() === "") {
-    return res.status(400).json({ error: "Query parameter 'q' is required" });
+    if (!q || q.trim() === "") {
+      return res.status(400).json({ error: "Query parameter 'q' is required" });
+    }
+
+    const regex    = new RegExp(q.trim(), "i"); // case-insensitive
+    const products = await Product.find({
+      $or: [
+        { productName: regex },
+        { category:    regex },
+        { tone:        regex },
+      ],
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json(products);
+  } catch (err) {
+    console.error("GET /products/search error:", err);
+    res.status(500).json({ error: "Search failed" });
   }
-
-  const query = q.toLowerCase().trim();
-  const results = products.filter(
-    (p) =>
-      (p.productName  && p.productName.toLowerCase().includes(query)) ||
-      (p.category     && p.category.toLowerCase().includes(query))    ||
-      (p.tone         && p.tone.toLowerCase().includes(query))
-  );
-
-  res.status(200).json(results);
 });
 
-// ── GET /api/products/:id — get single product ───────────────────────────
-router.get("/:id", (req, res) => {
-  const product = products.find((p) => p.id === req.params.id);
-  if (!product) {
-    return res.status(404).json({ error: "Product not found" });
+// ── GET /api/products/:id — get single product ────────────────────────────
+router.get("/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    res.status(200).json(product);
+  } catch (err) {
+    if (err.name === "CastError") {
+      return res.status(400).json({ error: "Invalid product ID format" });
+    }
+    res.status(500).json({ error: "Failed to fetch product" });
   }
-  res.status(200).json(product);
 });
 
-// ── POST /api/products — save a new product ──────────────────────────────
-router.post("/", (req, res) => {
-  const data = req.body || {};
+// ── POST /api/products — save a new product ───────────────────────────────
+router.post("/", async (req, res) => {
+  try {
+    const {
+      productName, ingredients, weight, category,
+      features, platform, platforms, tone, keywords,
+    } = req.body;
 
-  if (!data.productName) {
-    return res.status(400).json({ error: "productName is required" });
+    const product = new Product({
+      productName,
+      ingredients,
+      weight,
+      category,
+      features: Array.isArray(features) ? features : features ? [features] : [],
+      platform,
+      platforms: Array.isArray(platforms) ? platforms : platforms ? [platforms] : [],
+      tone,
+      keywords: Array.isArray(keywords) ? keywords : keywords ? [keywords] : [],
+    });
+
+    const saved = await product.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    if (err.name === "ValidationError") {
+      const messages = Object.values(err.errors).map((e) => e.message);
+      return res.status(400).json({ error: "Validation failed", details: messages });
+    }
+    console.error("POST /products error:", err);
+    res.status(500).json({ error: "Failed to save product" });
   }
-
-  const product = {
-    id: Date.now().toString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    ...data,
-  };
-
-  products.unshift(product);
-  res.status(201).json(product);
 });
 
 // ── PUT /api/products/:id — update an existing product ───────────────────
-router.put("/:id", (req, res) => {
-  const { id } = req.params;
-  const index = products.findIndex((p) => p.id === id);
+router.put("/:id", async (req, res) => {
+  try {
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, updatedAt: new Date() },
+      { new: true, runValidators: true }
+    );
 
-  if (index === -1) {
-    return res.status(404).json({ error: "Product not found" });
+    if (!updated) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    res.status(200).json(updated);
+  } catch (err) {
+    if (err.name === "ValidationError") {
+      const messages = Object.values(err.errors).map((e) => e.message);
+      return res.status(400).json({ error: "Validation failed", details: messages });
+    }
+    if (err.name === "CastError") {
+      return res.status(400).json({ error: "Invalid product ID format" });
+    }
+    res.status(500).json({ error: "Failed to update product" });
   }
-
-  // Merge existing product with new data; preserve id and createdAt
-  const updated = {
-    ...products[index],
-    ...req.body,
-    id,
-    createdAt: products[index].createdAt,
-    updatedAt: new Date().toISOString(),
-  };
-
-  products[index] = updated;
-  res.status(200).json(updated);
 });
 
-// ── DELETE /api/products/:id — remove a product ──────────────────────────
-router.delete("/:id", (req, res) => {
-  const { id } = req.params;
-  const exists = products.some((p) => p.id === id);
-
-  if (!exists) {
-    return res.status(404).json({ error: "Product not found" });
+// ── DELETE /api/products/:id — remove a product ───────────────────────────
+router.delete("/:id", async (req, res) => {
+  try {
+    const deleted = await Product.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    res.status(200).json({ message: "Deleted successfully", id: req.params.id });
+  } catch (err) {
+    if (err.name === "CastError") {
+      return res.status(400).json({ error: "Invalid product ID format" });
+    }
+    res.status(500).json({ error: "Failed to delete product" });
   }
-
-  products = products.filter((p) => p.id !== id);
-  res.status(200).json({ message: "Deleted successfully", id });
 });
 
 module.exports = router;

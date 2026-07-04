@@ -2,7 +2,7 @@
 // React Router setup — defines all page routes for the app.
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import SavedDescriptions from "./pages/SavedDescriptions";
 import Home      from "./pages/Home";
 import Generator from "./pages/Generator";
 import About     from "./pages/About";
@@ -22,7 +22,7 @@ export default function App() {
         <Route path="/login"     element={<Login />}     />
         <Route path="/register"  element={<Register />}  />
         <Route path="/saved"     element={<Saved />}     />
-
+        <Route path="/saved-descriptions" element={<SavedDescriptions />} />
         {/* 404 fallback */}
         <Route path="*" element={
           <div style={{

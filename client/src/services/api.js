@@ -1,30 +1,28 @@
 // client/src/services/api.js
-// Centralised Axios instance and API call functions for the
-// HimShakti backend (Express server on localhost:5000).
+// Centralised Axios instance and API functions.
 
 import axios from "axios";
 
-// Base URL — set VITE_API_URL in client/.env to override
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const api = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
-// ── Health Check ──────────────────────────────────────────────────────────
+// ── Health ────────────────────────────────────────────────────────────────
 export const checkHealth = () => api.get("/health");
 
-// ── Generation ───────────────────────────────────────────────────────────
-// data: { productName, ingredients, weight, category, features, platform, tone, keywords }
+// ── Generation ────────────────────────────────────────────────────────────
 export const generateDescription = (data) => api.post("/generate", data);
 
-// ── Products (Saved Listings) ───────────────────────────────────────────
-export const getProducts = () => api.get("/products");
-export const getProduct = (id) => api.get(`/products/${id}`);
-export const saveProduct = (data) => api.post("/products", data);
-export const deleteProduct = (id) => api.delete(`/products/${id}`);
+// ── Products ──────────────────────────────────────────────────────────────
+// params: { page, limit, platform }
+export const getProducts    = (params = {}) => api.get("/products", { params });
+export const getProduct     = (id)          => api.get(`/products/${id}`);
+export const saveProduct    = (data)        => api.post("/products", data);
+export const updateProduct  = (id, data)   => api.put(`/products/${id}`, data);
+export const deleteProduct  = (id)         => api.delete(`/products/${id}`);
+export const searchProducts = (q)          => api.get("/products/search", { params: { q } });
 
 export default api;
