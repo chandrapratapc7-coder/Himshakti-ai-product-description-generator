@@ -9,7 +9,7 @@ import About     from "./pages/About";
 import Dashboard from "./pages/Dashboard";
 import Login     from "./pages/Login";
 import Register  from "./pages/Register";
-import Saved     from "./pages/Saved";
+import Saved from "./pages/Saved";
 
 export default function App() {
   return (
@@ -21,8 +21,9 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login"     element={<Login />}     />
         <Route path="/register"  element={<Register />}  />
-        <Route path="/saved"     element={<Saved />}     />
         <Route path="/saved-descriptions" element={<SavedDescriptions />} />
+        <Route path="/saved" element={<Saved />} />
+
         {/* 404 fallback */}
         <Route path="*" element={
           <div style={{
