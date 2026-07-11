@@ -1,13 +1,14 @@
 // server/server.js
 // Main Express application with MongoDB connection via Mongoose.
 
-const express  = require("express");
-const cors     = require("cors");
-const mongoose = require("mongoose");
+const express   = require("express");
+const cors      = require("cors");
+const mongoose  = require("mongoose");
 require("dotenv").config();
 
 const generateRoutes = require("./routes/generate");
 const productRoutes  = require("./routes/products");
+const statsRoutes    = require("./routes/stats");
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -16,7 +17,6 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Request logger
 app.use((req, res, next) => {
   const ts = new Date().toISOString();
   console.log(`[${ts}] ${req.method} ${req.url}`);
@@ -30,7 +30,7 @@ const connectDB = async () => {
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);
   } catch (err) {
     console.error("❌ MongoDB connection error:", err.message);
-    process.exit(1); // Exit if DB fails to connect
+    process.exit(1);
   }
 };
 
@@ -46,8 +46,9 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.use("/api/generate",  generateRoutes);
-app.use("/api/products",  productRoutes);
+app.use("/api/generate", generateRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/stats",    statsRoutes);
 
 // ── 404 handler ───────────────────────────────────────────────────────────
 app.use((req, res) => {
@@ -60,7 +61,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-// ── Start server ──────────────────────────────────────────────────────────
+// ── Start ─────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`🚀 HimShakti backend running on http://localhost:${PORT}`);
 });
