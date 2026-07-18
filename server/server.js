@@ -1,67 +1,60 @@
-// server/server.js
-// Main Express application with MongoDB connection via Mongoose.
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
+const passport = require('./config/passport');
+const { apiLimiter } = require('./middleware/rateLimiters');
 
-const express   = require("express");
-const cors      = require("cors");
-const mongoose  = require("mongoose");
-require("dotenv").config();
+const authRoutes = require('./routes/auth');
+const dashboardRoutes = require('./routes/dashboard');
+// existing Week 4/5 routes
+const productRoutes = require('./routes/products');
+const generateRoutes = require('./routes/generate');
 
-const generateRoutes = require("./routes/generate");
-const productRoutes  = require("./routes/products");
-const statsRoutes    = require("./routes/stats");
+const app = express();
 
-const app  = express();
-const PORT = process.env.PORT || 5000;
-
-// ── Middleware ────────────────────────────────────────────────────────────
-app.use(cors());
+// --- Core middleware ---
+app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
+app.use(passport.initialize());
+app.use('/api', apiLimiter); // general rate limit on all API routes
 
-app.use((req, res, next) => {
-  const ts = new Date().toISOString();
-  console.log(`[${ts}] ${req.method} ${req.url}`);
-  next();
-});
+// --- Routes ---
+app.use('/api/auth', authRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/generate', generateRoutes);
 
-// ── MongoDB Connection ────────────────────────────────────────────────────
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
-    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
-  } catch (err) {
-    console.error("❌ MongoDB connection error:", err.message);
-    process.exit(1);
-  }
-};
+app.get('/api/health', (req, res) => res.json({ success: true, message: 'HimShakti API is running' }));
 
-connectDB();
-
-// ── Routes ────────────────────────────────────────────────────────────────
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "HimShakti backend is running",
-    database: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-    timestamp: new Date().toISOString(),
+// --- Error handler ---
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal server error',
   });
 });
 
-app.use("/api/generate", generateRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/stats",    statsRoutes);
+// --- DB + server start ---
+const PORT = process.env.PORT || 5000;
 
-// ── 404 handler ───────────────────────────────────────────────────────────
-app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
-});
-
-// ── Global error handler ──────────────────────────────────────────────────
-app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err.stack);
-  res.status(500).json({ error: "Internal server error" });
-});
-
-// ── Start ─────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`🚀 HimShakti backend running on http://localhost:${PORT}`);
-});
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('MongoDB Atlas connected');
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch((err) => {
+    console.error('MongoDB connection failed:', err.message);
+    process.exit(1);
+  });

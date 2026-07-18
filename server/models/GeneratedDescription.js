@@ -1,56 +1,45 @@
-// server/models/GeneratedDescription.js
-// Mongoose schema for an AI-generated product description,
-// linked to a Product via productId.
-
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const GeneratedDescriptionSchema = new mongoose.Schema(
   {
-    productId: {
+    // --- NEW for Week 6: ties each generation to the user who made it ---
+    user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-      required: [true, "productId is required"],
+      ref: 'User',
+      required: true,
+      index: true,
     },
-    title: {
+
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+    },
+    productName: { type: String, required: true, trim: true },
+    category: {
       type: String,
-      required: [true, "title is required"],
-      trim: true,
+      enum: ['Snacks', 'Juices', 'Jams', 'Pickles', 'Chutneys'],
+      required: true,
     },
-    shortDesc: {
-      type: String,
-      required: [true, "shortDesc is required"],
-      trim: true,
-    },
-    longDesc: {
-      type: String,
-      required: [true, "longDesc is required"],
-      trim: true,
-    },
-    bulletPoints: {
-      type: [String],
-      default: [],
-    },
-    seoKeywords: {
-      type: [String],
-      default: [],
-    },
-    usageSuggestion: {
-      type: String,
-      trim: true,
-    },
-    platform: {
-      type: String,
-      trim: true,
-    },
+    platform: [
+      {
+        type: String,
+        enum: ['Amazon', 'Flipkart', 'Meesho', 'Instagram', 'WhatsApp', 'D2C'],
+      },
+    ],
     tone: {
       type: String,
-      enum: ["Premium", "Traditional", "Health-focused"],
-      default: "Health-focused",
+      enum: ['premium', 'traditional', 'health'],
+      required: true,
     },
+
+    title: String,
+    shortDescription: String,
+    longDescription: String,
+    bulletPoints: [String],
+    seoKeywords: [String],
+    usageStorage: String,
   },
-  {
-    timestamps: true, // adds createdAt and updatedAt automatically
-  }
+  { timestamps: true }
 );
 
-module.exports = mongoose.model("GeneratedDescription", GeneratedDescriptionSchema);
+module.exports = mongoose.model('GeneratedDescription', GeneratedDescriptionSchema);

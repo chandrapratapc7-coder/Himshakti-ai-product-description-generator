@@ -1,8 +1,34 @@
 // pages/Login.jsx
+import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
+  const { login, loginWithGoogle } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/dashboard";
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await login(email, password);
+      navigate(from, { replace: true });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Login failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="login-page">
       <Navbar />
@@ -19,8 +45,8 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Placeholder form */}
-          <div className="login-form">
+          {/* Functional form */}
+          <form className="login-form" onSubmit={handleSubmit}>
             <div className="lf-field">
               <label className="lf-label" htmlFor="email">Email Address</label>
               <input
@@ -28,7 +54,9 @@ export default function Login() {
                 type="email"
                 className="lf-input"
                 placeholder="you@example.com"
-                disabled
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
 
@@ -39,25 +67,35 @@ export default function Login() {
                 type="password"
                 className="lf-input"
                 placeholder="••••••••"
-                disabled
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
 
-            {/* Coming soon notice */}
-            <div className="login-notice">
-              🔒 Authentication will be enabled in Week 8.
-              Login functionality is currently a UI placeholder.
+            <button className="lf-btn" type="submit" disabled={submitting}>
+              {submitting ? "Signing In..." : "Sign In"}
+            </button>
+
+            <div className="lf-divider">
+              <span className="lf-divider-line" />
+              <span className="lf-divider-text">or</span>
+              <span className="lf-divider-line" />
             </div>
 
-            <button className="lf-btn" disabled>
-              Sign In (Coming Soon)
+            <button
+              type="button"
+              className="lf-google-btn"
+              onClick={loginWithGoogle}
+            >
+              Continue with Google
             </button>
 
             <p className="lf-register">
               Don't have an account?{" "}
-              <a href="/register" className="lf-link">Register here</a>
+              <Link to="/register" className="lf-link">Register here</Link>
             </p>
-          </div>
+          </form>
 
         </div>
       </main>
@@ -98,16 +136,14 @@ export default function Login() {
           padding: .6rem .875rem; font-size: .9rem;
           background: #f7faf8; border: 1.5px solid #c8dfc8;
           border-radius: 8px; outline: none; font-family: inherit;
-          color: #1a3a2a; opacity: .6; cursor: not-allowed;
+          color: #1a3a2a;
         }
+        .lf-input:focus { border-color: #2d6a4f; background: #fff; }
 
-        /* Notice */
-        .login-notice {
-          padding: .75rem 1rem;
-          background: #fff8ed; border: 1px solid #f4d4a0;
-          border-radius: 8px; font-size: .8rem; color: #8a5a1a;
-          line-height: 1.55;
-        }
+        /* Divider */
+        .lf-divider { display: flex; align-items: center; gap: .75rem; margin: .25rem 0; }
+        .lf-divider-line { flex: 1; height: 1px; background: #d5e8d4; }
+        .lf-divider-text { font-size: .8rem; color: #6b9e82; }
 
         /* Button */
         .lf-btn {
@@ -115,9 +151,21 @@ export default function Login() {
           background: #2d6a4f; color: #fff;
           font-size: .95rem; font-weight: 700;
           border: none; border-radius: 9px;
-          cursor: not-allowed; opacity: .5;
-          font-family: inherit;
+          cursor: pointer; font-family: inherit;
+          transition: opacity .15s ease;
         }
+        .lf-btn:hover:not(:disabled) { opacity: .9; }
+        .lf-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+        .lf-google-btn {
+          width: 100%; padding: .75rem;
+          background: #fff; color: #1a3a2a;
+          font-size: .9rem; font-weight: 600;
+          border: 1.5px solid #c8dfc8; border-radius: 9px;
+          cursor: pointer; font-family: inherit;
+          transition: background .15s ease;
+        }
+        .lf-google-btn:hover { background: #f7faf8; }
 
         /* Register link */
         .lf-register { text-align: center; font-size: .82rem; color: #6b9e82; margin: 0; }

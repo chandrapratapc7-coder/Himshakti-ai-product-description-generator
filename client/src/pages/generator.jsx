@@ -1,8 +1,11 @@
-// Generator.jsx (Week 4 update)
-// Now uses real Axios API calls to the Express backend.
-// Shows Loader while generating, Toast on errors.
+// Generator.jsx (Week 7 update)
+// Wired to the real backend: /api/generate (Gemini/OpenAI) with mock fallback.
+// Translates between the form's display values and the backend's expected
+// enum values (category, tone, platform array) without touching ProductForm,
+// OutputEditor, or PreviewCard.
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ProductForm   from "../components/ProductForm";
 import OutputEditor  from "../components/OutputEditor";
 import PreviewCard   from "../components/PreviewCard";
@@ -10,7 +13,7 @@ import Navbar        from "../components/Navbar";
 import Footer        from "../components/Footer";
 import Loader        from "../components/Loader";
 import { useToast }  from "../components/Toast";
-import { generateDescription, saveProduct } from "../services/api";
+import { generateDescription, regenerateDescription } from "../services/api";
 
 // ── Initial form state ──────────────────────────────────────────────────
 const INITIAL_FORM = {
@@ -23,6 +26,32 @@ const INITIAL_FORM = {
   platforms:   [],
   keywords:    "",
 };
+
+// ── Mapping: form display values → backend enum values ──────────────────
+// The backend's GeneratedDescription schema only accepts these exact enums.
+// This keeps ProductForm's friendlier display labels untouched.
+const CATEGORY_TO_BACKEND = {
+  "Snacks / Baked Goods": "Snacks",
+  "Juices / Drinks":      "Juices",
+  "Jams / Preserves":     "Jams",
+  "Pickles / Achaar":     "Pickles",
+  "Chutneys / Sauces":    "Chutneys",
+  "Namkeen / Trail Mix":  "Snacks", // closest backend category
+};
+
+const TONE_TO_BACKEND = {
+  "Premium":         "premium",
+  "Traditional":     "traditional",
+  "Health-focused":  "health",
+};
+
+function toBackendCategory(displayCategory) {
+  return CATEGORY_TO_BACKEND[displayCategory] || "Snacks";
+}
+
+function toBackendTone(displayTone) {
+  return TONE_TO_BACKEND[displayTone] || "health";
+}
 
 // ── Validation ──────────────────────────────────────────────────────────
 function validate(form) {
@@ -46,17 +75,28 @@ function validate(form) {
 
 // ── Main Generator Page ─────────────────────────────────────────────────
 export default function Generator() {
+  const navigate = useNavigate();
   const [formData, setFormData]         = useState(INITIAL_FORM);
   const [errors, setErrors]             = useState({});
   const [isLoading, setIsLoading]       = useState(false);
-  const [isSaving, setIsSaving]         = useState(false);
   const [output, setOutput]             = useState(null);
+  const [generatedId, setGeneratedId]   = useState(null); // Mongo _id of the saved doc
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [activeTab, setActiveTab]       = useState("content");
 
   const { showToast } = useToast();
 
-  // ── Generate ──────────────────────────────────────────────────────────
+  // Maps the backend's response shape to what OutputEditor/PreviewCard expect
+  const mapBackendOutput = (data) => ({
+    title:     data.title,
+    shortDesc: data.shortDescription,
+    longDesc:  data.longDescription,
+    bullets:   data.bulletPoints,
+    keywords:  data.seoKeywords,
+    usage:     data.usageStorage,
+  });
+
+  // ── Generate (fresh) ─────────────────────────────────────────────────
   const handleSubmit = async () => {
     const foundErrors = validate(formData);
     if (Object.keys(foundErrors).length > 0) {
@@ -72,44 +112,39 @@ export default function Generator() {
     setIsLoading(true);
     setHasSubmitted(true);
     setOutput(null);
+    setGeneratedId(null);
 
     try {
-      // ── Real API call to Express backend ──────────────────────────────
       const response = await generateDescription({
         productName: formData.productName,
         ingredients: formData.ingredients,
         weight:      formData.weight,
-        category:    formData.category,
+        category:    toBackendCategory(formData.category),
         features:    formData.features,
-        platform:    formData.platforms[0] || "Amazon",
-        tone:        formData.tone,
+        platform:    formData.platforms,           // array, not a single string
+        tone:        toBackendTone(formData.tone),
         keywords:    formData.keywords,
       });
 
-      // Map backend response fields to OutputEditor expected shape
-      const data = response.data;
-      setOutput({
-        title:     data.title,
-        shortDesc: data.shortDescription,
-        longDesc:  data.longDescription,
-        bullets:   data.bulletPoints,
-        keywords:  data.keywords,
-        usage:     data.usage,
-      });
+      const data = response.data.data; // axios response -> {success, data, meta}
+      setOutput(mapBackendOutput(data));
+      setGeneratedId(data._id);
 
-      showToast("Description generated successfully!", "success");
+      if (response.data.meta?.usedFallback) {
+        showToast("Generated using offline draft content (AI temporarily unavailable)", "warning");
+      } else {
+        showToast("Description generated successfully!", "success");
+      }
 
     } catch (err) {
       console.error("Generation failed:", err);
 
       if (err.response) {
-        // Server responded with error
         showToast(
-          err.response.data?.error || "Generation failed. Please try again.",
+          err.response.data?.message || "Generation failed. Please try again.",
           "error"
         );
       } else if (err.request) {
-        // No response — backend not running
         showToast(
           "Cannot connect to server. Make sure the backend is running on port 5000.",
           "error",
@@ -123,32 +158,38 @@ export default function Generator() {
     }
   };
 
-  // ── Save listing ──────────────────────────────────────────────────────
-  const handleSave = async () => {
-    if (!output) {
-      showToast("Generate a description first before saving.", "warning");
-      return;
+  // ── Regenerate (varies temperature/prompt on the existing saved doc) ──
+  const handleRegenerate = async () => {
+    if (!generatedId) {
+      // No saved doc yet (shouldn't normally happen) — fall back to a fresh generate
+      return handleSubmit();
     }
 
-    setIsSaving(true);
+    setIsLoading(true);
     try {
-      await saveProduct({
-        productName: formData.productName,
-        category:    formData.category,
-        weight:      formData.weight,
-        tone:        formData.tone,
-        platforms:   formData.platforms,
+      const response = await regenerateDescription(generatedId, {
         ingredients: formData.ingredients,
         features:    formData.features,
+        weight:      formData.weight,
         keywords:    formData.keywords,
-        output,
       });
-      showToast("Listing saved successfully!", "success");
+
+      const data = response.data.data;
+      setOutput(mapBackendOutput(data));
+
+      if (response.data.meta?.usedFallback) {
+        showToast("Regenerated using offline draft content (AI temporarily unavailable)", "warning");
+      } else {
+        showToast("Regenerated with fresh variation!", "success");
+      }
     } catch (err) {
-      console.error("Save failed:", err);
-      showToast("Failed to save listing. Please try again.", "error");
+      console.error("Regeneration failed:", err);
+      showToast(
+        err.response?.data?.message || "Regeneration failed. Please try again.",
+        "error"
+      );
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
 
@@ -191,18 +232,15 @@ export default function Generator() {
               isLoading={isLoading}
             />
 
-            {/* Save button — shows after output generated */}
-            {output && (
+            {/* Generated + auto-saved confirmation — generation already
+                persists to MongoDB tied to the logged-in user, so there's
+                no separate "save" action; this just links to where it landed. */}
+            {output && generatedId && (
               <button
                 className="gen-save-btn"
-                onClick={handleSave}
-                disabled={isSaving}
+                onClick={() => navigate("/saved-descriptions")}
               >
-                {isSaving ? (
-                  <><Loader type="spinner" size="sm" /> Saving…</>
-                ) : (
-                  "💾 Save This Listing"
-                )}
+                ✓ Saved — View in Saved Descriptions
               </button>
             )}
           </section>
@@ -213,7 +251,7 @@ export default function Generator() {
               <OutputEditor
                 output={output}
                 isLoading={isLoading}
-                onRegenerate={handleSubmit}
+                onRegenerate={handleRegenerate}
               />
             </div>
             <div className={`gen-right-block ${activeTab === "preview" ? "gen-right-block--show" : ""}`}>
@@ -250,19 +288,18 @@ export default function Generator() {
         }
         .gen-col--right { display: flex; flex-direction: column; gap: 1.5rem; }
 
-        /* Save button */
+        /* Save/confirmation button */
         .gen-save-btn {
           width: 100%; margin-top: .875rem;
           padding: .75rem; border: 2px solid #2d6a4f;
-          background: transparent; color: #2d6a4f;
+          background: #edf7f1; color: #2d6a4f;
           font-size: .95rem; font-weight: 700;
           border-radius: 10px; cursor: pointer;
           display: flex; align-items: center; justify-content: center; gap: .5rem;
           transition: background .15s, color .15s;
           font-family: inherit;
         }
-        .gen-save-btn:hover:not(:disabled) { background: #edf7f1; }
-        .gen-save-btn:disabled { opacity: .6; cursor: not-allowed; }
+        .gen-save-btn:hover { background: #d5e8d4; }
 
         @media (max-width: 980px) {
           .gen-grid { grid-template-columns: 1fr; }

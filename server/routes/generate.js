@@ -1,113 +1,126 @@
-// server/routes/generate.js
-// POST /api/generate
-// Generates a description (mock for now, real AI in Week 7)
-// and saves the result to MongoDB via GeneratedDescription model.
+const express = require('express');
+const router = express.Router();
 
-const express              = require("express");
-const router               = express.Router();
-const GeneratedDescription = require("../models/GeneratedDescription");
-const Product              = require("../models/Product");
+const { protect } = require('../middleware/auth');
+const { generateLimiter } = require('../middleware/rateLimiters');
+const { validateGenerateInput, validateObjectIdParam } = require('../middleware/validators');
+const GeneratedDescription = require('../models/GeneratedDescription');
+const { generateMockDescription } = require('../services/mockAiService');
 
-// ── Helper: build mock AI response ───────────────────────────────────────
-function buildMockResponse(data) {
-  const {
-    productName, ingredients, weight,
-    category, features, platform, tone, keywords,
-  } = data;
+// --- AI provider switch (Day 3: "OpenAI or Gemini") ---
+// Set AI_PROVIDER=openai or AI_PROVIDER=gemini in .env — no code changes needed to swap.
+const AI_PROVIDER = (process.env.AI_PROVIDER || 'openai').toLowerCase();
 
-  const firstIngredient = (ingredients || "").split(",")[0]?.trim() || "natural ingredients";
-  const toneLabel       = (tone || "Premium").toLowerCase();
+const providerKeyPresent =
+  AI_PROVIDER === 'gemini' ? !!process.env.GEMINI_API_KEY : !!process.env.OPENAI_API_KEY;
 
-  return {
-    title:       `${productName} | ${category} | ${weight}`,
-    shortDesc:   `A ${toneLabel} ${category.toLowerCase()} crafted from ${firstIngredient}. Perfect for customers seeking authentic Himalayan flavours.`,
-    longDesc:    `Introducing ${productName} — a ${toneLabel} offering from the heart of Uttarakhand. Made with ${ingredients}, this product embodies the rich culinary heritage of the Himalayas. ${features || ""} Ideal for all age groups and available on ${platform || "your favourite platforms"}.`,
-    bulletPoints:[
-      `Made with ${firstIngredient} sourced from Himalayan farms`,
-      features || "High quality, carefully selected ingredients",
-      "No artificial preservatives or colours",
-      "Traditional Pahadi recipe — authentic mountain taste",
-      "Suitable for health-conscious snackers and families",
-    ],
-    seoKeywords: [
-      productName.toLowerCase(),
-      "Himalayan food",
-      "Uttarakhand products",
-      "natural ingredients",
-      "Pahadi food",
-      ...(keywords ? keywords.split(",").map((k) => k.trim()).filter(Boolean) : []),
-    ].slice(0, 10),
-    usageSuggestion: "Store in a cool, dry place away from direct sunlight. Best consumed within 30 days of opening. Reseal the pack after each use to retain freshness.",
-  };
+const USE_MOCK = !providerKeyPresent || process.env.AI_MODE === 'mock';
+
+// Lazily require only the service that's actually configured, so a missing
+// SDK for the unused provider never breaks the app.
+function getGenerateDescription() {
+  if (AI_PROVIDER === 'gemini') {
+    return require('../services/geminiService').generateDescription;
+  }
+  return require('../services/aiService').generateDescription;
 }
 
-// ── POST /api/generate ────────────────────────────────────────────────────
-router.post("/", async (req, res) => {
-  const {
-    productName, ingredients, weight, category,
-    features, platform, platforms, tone, keywords,
-  } = req.body || {};
+// --- POST /api/generate ---
+router.post('/', protect, generateLimiter, validateGenerateInput, async (req, res) => {
+  const input = req.body;
+  let aiOutput;
+  let usedFallback = false;
 
-  // Validation
-  const missing = [];
-  if (!productName)  missing.push("productName");
-  if (!ingredients)  missing.push("ingredients");
-  if (!category)     missing.push("category");
-  if (!weight)       missing.push("weight");
-
-  if (missing.length > 0) {
-    return res.status(400).json({ error: "Missing required fields", missingFields: missing });
+  try {
+    const generateDescription = getGenerateDescription();
+    aiOutput = USE_MOCK
+      ? generateMockDescription(input)
+      : await generateDescription(input);
+  } catch (err) {
+    // Real AI call failed (rate limit, outage, malformed response) — fall back
+    // to mock content rather than showing the user a hard error.
+    console.error('AI generation failed, falling back to mock:', err.message);
+    aiOutput = generateMockDescription(input);
+    usedFallback = true;
   }
 
   try {
-    // 1. Save the product to MongoDB
-    const product = await Product.create({
-      productName,
-      ingredients,
-      weight,
-      category,
-      features: features ? [features] : [],
-      platform,
-      platforms: Array.isArray(platforms) ? platforms : platforms ? [platforms] : [],
-      tone,
-      keywords: keywords ? keywords.split(",").map((k) => k.trim()) : [],
+    const saved = await GeneratedDescription.create({
+      user: req.user._id,
+      productName: input.productName,
+      category: input.category,
+      platform: input.platform,
+      tone: input.tone,
+      ...aiOutput,
     });
 
-    // 2. Generate the description (mock — replace with AI in Week 7)
-    const generated = buildMockResponse({
-      productName, ingredients, weight, category,
-      features, platform, tone, keywords,
+    res.status(201).json({
+      success: true,
+      data: saved,
+      meta: { usedFallback },
     });
-
-    // 3. Save the generated description linked to the product
-    const savedDesc = await GeneratedDescription.create({
-      productId:       product._id,
-      title:           generated.title,
-      shortDesc:       generated.shortDesc,
-      longDesc:        generated.longDesc,
-      bulletPoints:    generated.bulletPoints,
-      seoKeywords:     generated.seoKeywords,
-      usageSuggestion: generated.usageSuggestion,
-      platform:        platform || (platforms ? platforms[0] : "Amazon"),
-      tone,
-    });
-
-    // 4. Return combined response to frontend
-    res.status(200).json({
-      productId:       product._id,
-      descriptionId:   savedDesc._id,
-      title:           generated.title,
-      shortDescription:generated.shortDesc,
-      longDescription: generated.longDesc,
-      bulletPoints:    generated.bulletPoints,
-      keywords:        generated.seoKeywords,
-      usage:           generated.usageSuggestion,
-    });
-
   } catch (err) {
-    console.error("POST /generate error:", err);
-    res.status(500).json({ error: "Failed to generate description" });
+    res.status(500).json({ success: false, message: 'Failed to save generated description', error: err.message });
   }
+});
+
+// --- POST /api/generate/regenerate/:id — regenerate content for an existing entry ---
+router.post('/regenerate/:id', protect, generateLimiter, validateObjectIdParam, async (req, res) => {
+  try {
+    const existing = await GeneratedDescription.findOne({ _id: req.params.id, user: req.user._id });
+    if (!existing) return res.status(404).json({ success: false, message: 'Not found' });
+
+    const input = {
+      productName: existing.productName,
+      ingredients: req.body.ingredients || '',
+      weight: req.body.weight,
+      category: existing.category,
+      features: req.body.features || '',
+      platform: existing.platform,
+      tone: existing.tone,
+      keywords: req.body.keywords,
+    };
+
+    let aiOutput;
+    let usedFallback = false;
+    try {
+      const generateDescription = getGenerateDescription();
+      aiOutput = USE_MOCK
+        ? generateMockDescription(input)
+        : await generateDescription(input, { isRegenerate: true });
+    } catch (err) {
+      console.error('Regenerate AI call failed, falling back to mock:', err.message);
+      aiOutput = generateMockDescription(input);
+      usedFallback = true;
+    }
+
+    Object.assign(existing, aiOutput);
+    await existing.save();
+
+    res.status(200).json({ success: true, data: existing, meta: { usedFallback } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Regeneration failed', error: err.message });
+  }
+});
+
+// --- GET /api/generate — list current user's saved generations ---
+router.get('/', protect, async (req, res) => {
+  const items = await GeneratedDescription.find({ user: req.user._id }).sort({ createdAt: -1 });
+  res.json({ success: true, data: items });
+});
+
+// --- GET /api/generate/:id ---
+router.get('/:id', protect, validateObjectIdParam, async (req, res) => {
+  const item = await GeneratedDescription.findOne({ _id: req.params.id, user: req.user._id });
+  if (!item) return res.status(404).json({ success: false, message: 'Not found' });
+  res.json({ success: true, data: item });
+});
+
+// --- DELETE /api/generate/:id ---
+router.delete('/:id', protect, validateObjectIdParam, async (req, res) => {
+  const deleted = await GeneratedDescription.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+  if (!deleted) return res.status(404).json({ success: false, message: 'Not found' });
+  res.json({ success: true, message: 'Deleted' });
 });
 
 module.exports = router;

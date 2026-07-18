@@ -1,9 +1,44 @@
 // pages/Register.jsx
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
+  const { register, loginWithGoogle } = useAuth();
+  const navigate = useNavigate();
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await register(name, email, password);
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Registration failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="register-page">
       <Navbar />
@@ -20,8 +55,8 @@ export default function Register() {
             </p>
           </div>
 
-          {/* Placeholder form */}
-          <div className="register-form">
+          {/* Functional form */}
+          <form className="register-form" onSubmit={handleSubmit}>
             <div className="rf-field">
               <label className="rf-label" htmlFor="name">Full Name</label>
               <input
@@ -29,7 +64,9 @@ export default function Register() {
                 type="text"
                 className="rf-input"
                 placeholder="Chandra Pratap Singh"
-                disabled
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
               />
             </div>
 
@@ -40,7 +77,9 @@ export default function Register() {
                 type="email"
                 className="rf-input"
                 placeholder="you@example.com"
-                disabled
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
 
@@ -51,7 +90,10 @@ export default function Register() {
                 type="password"
                 className="rf-input"
                 placeholder="••••••••"
-                disabled
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
+                required
               />
             </div>
 
@@ -62,26 +104,36 @@ export default function Register() {
                 type="password"
                 className="rf-input"
                 placeholder="••••••••"
-                disabled
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                minLength={6}
+                required
               />
             </div>
 
-            {/* Coming soon notice */}
-            <div className="register-notice">
-              🔒 Authentication will be enabled in Week 8.
-              Registration is currently a UI placeholder — your data
-              is saved locally in your browser for now, no account needed.
+            <button className="rf-btn" type="submit" disabled={submitting}>
+              {submitting ? "Creating Account..." : "Create Account"}
+            </button>
+
+            <div className="rf-divider">
+              <span className="rf-divider-line" />
+              <span className="rf-divider-text">or</span>
+              <span className="rf-divider-line" />
             </div>
 
-            <button className="rf-btn" disabled>
-              Create Account (Coming Soon)
+            <button
+              type="button"
+              className="rf-google-btn"
+              onClick={loginWithGoogle}
+            >
+              Continue with Google
             </button>
 
             <p className="rf-login">
               Already have an account?{" "}
               <Link to="/login" className="rf-link">Sign in here</Link>
             </p>
-          </div>
+          </form>
 
         </div>
       </main>
@@ -122,16 +174,14 @@ export default function Register() {
           padding: .6rem .875rem; font-size: .9rem;
           background: #f7faf8; border: 1.5px solid #c8dfc8;
           border-radius: 8px; outline: none; font-family: inherit;
-          color: #1a3a2a; opacity: .6; cursor: not-allowed;
+          color: #1a3a2a;
         }
+        .rf-input:focus { border-color: #2d6a4f; background: #fff; }
 
-        /* Notice */
-        .register-notice {
-          padding: .75rem 1rem;
-          background: #fff8ed; border: 1px solid #f4d4a0;
-          border-radius: 8px; font-size: .8rem; color: #8a5a1a;
-          line-height: 1.55;
-        }
+        /* Divider */
+        .rf-divider { display: flex; align-items: center; gap: .75rem; margin: .25rem 0; }
+        .rf-divider-line { flex: 1; height: 1px; background: #d5e8d4; }
+        .rf-divider-text { font-size: .8rem; color: #6b9e82; }
 
         /* Button */
         .rf-btn {
@@ -139,9 +189,21 @@ export default function Register() {
           background: #2d6a4f; color: #fff;
           font-size: .95rem; font-weight: 700;
           border: none; border-radius: 9px;
-          cursor: not-allowed; opacity: .5;
-          font-family: inherit;
+          cursor: pointer; font-family: inherit;
+          transition: opacity .15s ease;
         }
+        .rf-btn:hover:not(:disabled) { opacity: .9; }
+        .rf-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+        .rf-google-btn {
+          width: 100%; padding: .75rem;
+          background: #fff; color: #1a3a2a;
+          font-size: .9rem; font-weight: 600;
+          border: 1.5px solid #c8dfc8; border-radius: 9px;
+          cursor: pointer; font-family: inherit;
+          transition: background .15s ease;
+        }
+        .rf-google-btn:hover { background: #f7faf8; }
 
         /* Login link */
         .rf-login { text-align: center; font-size: .82rem; color: #6b9e82; margin: 0; }
