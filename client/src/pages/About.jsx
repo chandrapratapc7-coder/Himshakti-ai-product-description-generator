@@ -1,4 +1,3 @@
-// pages/About.jsx
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -40,7 +39,9 @@ export default function About() {
                 HimShakti generate professional, platform-optimised product
                 descriptions using artificial intelligence. The tool reduces
                 the time and effort needed to create listings for Amazon,
-                Flipkart, and other e-commerce platforms.
+                Flipkart, Meesho, Instagram, WhatsApp, and D2C storefronts,
+                with every generated description saved automatically to your
+                account.
               </p>
             </div>
 
@@ -59,8 +60,8 @@ export default function About() {
               <p className="about-block__text">
                 This project was built by <strong>Chandra Pratap Singh</strong>,
                 an intern at TBI-GEU, as part of a 10-week full-stack
-                development programme. The tech stack includes React.js, Vite,
-                Tailwind CSS, Node.js, and planned AI API integration.
+                development programme covering authentication, database design,
+                AI API integration, and production-grade frontend polish.
               </p>
             </div>
           </div>
@@ -69,8 +70,9 @@ export default function About() {
           <div className="about-tech">
             <h3 className="about-tech__heading">Tech Stack Used</h3>
             <div className="about-tech__pills">
-              {["React.js", "Vite", "Tailwind CSS", "Node.js", "Express.js",
-                "MongoDB (Planned)", "OpenAI API (Planned)"].map((t) => (
+              {["React.js + Vite", "Node.js + Express", "MongoDB Atlas",
+                "JWT + bcrypt Auth", "Google OAuth (Passport.js)",
+                "Gemini AI (@google/genai)", "OpenAI (fallback)"].map((t) => (
                 <span key={t} className="about-tech__pill">{t}</span>
               ))}
             </div>
@@ -90,7 +92,6 @@ export default function About() {
         .about-main { flex: 1; padding: 3rem 1.5rem; }
         .about-inner { max-width: 960px; margin: 0 auto; }
 
-        /* Header */
         .page-header { text-align: center; margin-bottom: 2.5rem; }
         .page-eyebrow {
           display: inline-block; font-size: .75rem; font-weight: 700;
@@ -107,7 +108,6 @@ export default function About() {
           max-width: 520px; margin: 0 auto; line-height: 1.65;
         }
 
-        /* Grid */
         .about-grid {
           display: grid; grid-template-columns: 1fr 1fr;
           gap: 1.25rem; margin-bottom: 2rem;
@@ -124,7 +124,6 @@ export default function About() {
           font-size: .875rem; color: #4a7c5e; margin: 0; line-height: 1.7;
         }
 
-        /* Tech pills */
         .about-tech {
           background: #fff; border: 1px solid #d5e8d4;
           border-radius: 12px; padding: 1.5rem;
@@ -140,9 +139,14 @@ export default function About() {
           border-radius: 999px; font-size: .8rem; font-weight: 600; color: #2d6a4f;
         }
 
-        @media (max-width: 640px) {
+        /* ── Responsive pass: 768px / 375px ── */
+        @media (max-width: 768px) {
           .about-grid { grid-template-columns: 1fr; }
-          .about-main { padding: 2rem 1rem; }
+          .about-main { padding: 2rem 1.25rem; }
+        }
+        @media (max-width: 375px) {
+          .about-main { padding: 1.5rem 1rem; }
+          .about-block { padding: 1.15rem; }
         }
       `}</style>
     </div>
