@@ -1,13 +1,16 @@
 // pages/Saved.jsx
-// Fetches saved listings from MongoDB backend via GET /api/products.
+// Fetches saved AI-generated descriptions via services/api.js (GET /api/generate).
+// These are the auto-saved outputs from the Generator (Week 7), not the Product catalog.
 
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import Navbar       from "../components/Navbar";
-import Footer       from "../components/Footer";
-import Button       from "../components/Button";
-import Loader       from "../components/Loader";
-import { useToast } from "../components/Toast";
+import Navbar        from "../components/Navbar";
+import Footer         from "../components/Footer";
+import Button          from "../components/Button";
+import Loader          from "../components/Loader";
+import Modal            from "../components/Modal";
+import { useToast }     from "../components/Toast";
+import { getSavedDescriptions, deleteSavedDescription } from "../services/api";
 
 const PLATFORM_COLORS = {
   Amazon:    "#ff9900",
@@ -26,18 +29,19 @@ function formatDate(iso) {
 }
 
 // ── Single listing card ───────────────────────────────────────────────────
-function ListingCard({ product, onDelete }) {
+function ListingCard({ item, onRequestDelete }) {
   const [expanded, setExpanded] = useState(false);
   const [copied,   setCopied]   = useState(false);
 
   const copyAll = () => {
     const text = [
-      `Product: ${product.productName}`,
-      `Category: ${product.category} | Weight: ${product.weight}`,
-      `Tone: ${product.tone}`,
-      `Ingredients: ${product.ingredients}`,
-      product.platforms?.length ? `Platforms: ${product.platforms.join(", ")}` : "",
-      product.keywords?.length  ? `Keywords: ${product.keywords.join(", ")}`   : "",
+      `Title: ${item.title}`,
+      `Category: ${item.category} | Tone: ${item.tone}`,
+      item.shortDescription ? `Short: ${item.shortDescription}` : "",
+      item.longDescription  ? `Long: ${item.longDescription}`   : "",
+      item.bulletPoints?.length ? `Bullets: ${item.bulletPoints.join(" | ")}` : "",
+      item.platform?.length ? `Platforms: ${item.platform.join(", ")}` : "",
+      item.seoKeywords?.length ? `Keywords: ${item.seoKeywords.join(", ")}` : "",
     ].filter(Boolean).join("\n");
 
     navigator.clipboard.writeText(text).then(() => {
@@ -50,23 +54,31 @@ function ListingCard({ product, onDelete }) {
     <div className="sl-card">
       {/* Header */}
       <div className="sl-card__header">
+        {item.image && (
+          <img src={item.image} alt={item.title} className="sl-card__thumb" />
+        )}
         <div className="sl-card__heading">
-          <h3 className="sl-card__title">{product.productName}</h3>
-          <span className="sl-card__date">Saved {formatDate(product.createdAt)}</span>
+          <h3 className="sl-card__title">{item.title}</h3>
+          <span className="sl-card__date">Saved {formatDate(item.createdAt)}</span>
         </div>
         <div className="sl-card__meta">
-          {[product.category, product.weight, product.tone].filter(Boolean).map((tag) => (
-            <span key={tag} className={`sl-chip ${tag === product.tone ? "sl-chip--tone" : ""}`}>
+          {[item.category, item.tone].filter(Boolean).map((tag) => (
+            <span key={tag} className={`sl-chip ${tag === item.tone ? "sl-chip--tone" : ""}`}>
               {tag}
             </span>
           ))}
+          {item.usedFallback && (
+            <span className="sl-chip sl-chip--fallback" title="Generated using mock fallback, not live AI">
+              ⚠ Fallback
+            </span>
+          )}
         </div>
       </div>
 
       {/* Platforms */}
-      {product.platforms?.length > 0 && (
+      {item.platform?.length > 0 && (
         <div className="sl-platforms">
-          {product.platforms.map((p) => (
+          {item.platform.map((p) => (
             <span
               key={p}
               className="sl-platform-pill"
@@ -84,29 +96,39 @@ function ListingCard({ product, onDelete }) {
 
       {/* Preview (collapsed) */}
       {!expanded && (
-        <p className="sl-preview">
-          <strong>Ingredients:</strong> {product.ingredients}
-        </p>
+        <p className="sl-preview">{item.shortDescription}</p>
       )}
 
       {/* Full details (expanded) */}
       {expanded && (
         <div className="sl-full">
           <div className="sl-section">
-            <span className="sl-section__label">Ingredients</span>
-            <p className="sl-section__text">{product.ingredients}</p>
+            <span className="sl-section__label">Short Description</span>
+            <p className="sl-section__text">{item.shortDescription}</p>
           </div>
-          {product.features?.length > 0 && (
+          <div className="sl-section">
+            <span className="sl-section__label">Long Description</span>
+            <p className="sl-section__text">{item.longDescription}</p>
+          </div>
+          {item.bulletPoints?.length > 0 && (
             <div className="sl-section">
-              <span className="sl-section__label">Features</span>
-              <p className="sl-section__text">{product.features.join(", ")}</p>
+              <span className="sl-section__label">Bullet Points</span>
+              <ul className="sl-bullets">
+                {item.bulletPoints.map((b, i) => <li key={i}>{b}</li>)}
+              </ul>
             </div>
           )}
-          {product.keywords?.length > 0 && (
+          {item.usageStorage && (
             <div className="sl-section">
-              <span className="sl-section__label">Keywords</span>
+              <span className="sl-section__label">Usage & Storage</span>
+              <p className="sl-section__text">{item.usageStorage}</p>
+            </div>
+          )}
+          {item.seoKeywords?.length > 0 && (
+            <div className="sl-section">
+              <span className="sl-section__label">SEO Keywords</span>
               <div className="sl-keywords">
-                {product.keywords.map((k) => (
+                {item.seoKeywords.map((k) => (
                   <span key={k} className="sl-keyword">{k}</span>
                 ))}
               </div>
@@ -114,7 +136,7 @@ function ListingCard({ product, onDelete }) {
           )}
           <div className="sl-section">
             <span className="sl-section__label">MongoDB ID</span>
-            <p className="sl-section__text sl-id">{product._id}</p>
+            <p className="sl-section__text sl-id">{item._id}</p>
           </div>
         </div>
       )}
@@ -127,7 +149,7 @@ function ListingCard({ product, onDelete }) {
         <Button variant="primary" size="sm" onClick={copyAll}>
           {copied ? "✓ Copied!" : "⎘ Copy"}
         </Button>
-        <Button variant="danger" size="sm" onClick={() => onDelete(product._id)}>
+        <Button variant="danger" size="sm" onClick={() => onRequestDelete(item)}>
           🗑 Delete
         </Button>
       </div>
@@ -143,7 +165,12 @@ function ListingCard({ product, onDelete }) {
           display:flex; justify-content:space-between; align-items:flex-start;
           flex-wrap:wrap; gap:.75rem; margin-bottom:.75rem;
         }
-        .sl-card__heading { display:flex; flex-direction:column; gap:.15rem; }
+        .sl-card__thumb {
+          width:64px; height:64px; object-fit:cover;
+          border-radius:10px; border:1px solid #d5e8d4;
+          flex-shrink:0;
+        }
+        .sl-card__heading { display:flex; flex-direction:column; gap:.15rem; flex:1; min-width:160px; }
         .sl-card__title { font-size:1.05rem; font-weight:800; color:#1a3a2a; margin:0; }
         .sl-card__date  { font-size:.75rem; color:#a0b8a8; }
         .sl-card__meta  { display:flex; gap:.4rem; flex-wrap:wrap; }
@@ -153,6 +180,7 @@ function ListingCard({ product, onDelete }) {
           padding:.2rem .6rem; border-radius:999px;
         }
         .sl-chip--tone { color:#2d6a4f; background:#e0f2e9; }
+        .sl-chip--fallback { color:#b45309; background:#fff8ed; border-color:#f4d4a0; }
         .sl-platforms { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.75rem; }
         .sl-platform-pill {
           font-size:.72rem; font-weight:700; padding:.2rem .65rem;
@@ -171,6 +199,7 @@ function ListingCard({ product, onDelete }) {
           text-transform:uppercase; letter-spacing:.06em; margin-bottom:.25rem;
         }
         .sl-section__text { font-size:.875rem; color:#1a3a2a; margin:0; line-height:1.7; }
+        .sl-bullets { margin:0; padding-left:1.1rem; font-size:.875rem; color:#1a3a2a; line-height:1.8; }
         .sl-id { font-family:monospace; font-size:.78rem; color:#6b9e82; }
         .sl-keywords { display:flex; flex-wrap:wrap; gap:.4rem; }
         .sl-keyword {
@@ -189,49 +218,52 @@ function ListingCard({ product, onDelete }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────
 export default function Saved() {
-  const [products,    setProducts]    = useState([]);
-  const [isLoading,   setIsLoading]   = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [page,        setPage]        = useState(1);
-  const [pagination,  setPagination]  = useState(null);
+  const [items,       setItems]       = useState([]);
+  const [isLoading,    setIsLoading]  = useState(true);
+  const [error,        setError]      = useState(null);
+  const [searchQuery,  setSearchQuery] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null); // item pending delete confirmation
+  const [deleting,     setDeleting]    = useState(false);
   const { showToast } = useToast();
-  const LIMIT = 10;
 
-  const fetchProducts = useCallback(async (currentPage = 1) => {
+  const fetchItems = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const res  = await fetch(
-        `http://localhost:5000/api/products?page=${currentPage}&limit=${LIMIT}`
-      );
-      const data = await res.json();
-      setProducts(Array.isArray(data) ? data : (data.products || []));
-      if (data.pagination) setPagination(data.pagination);
-    } catch {
-      showToast("Failed to load saved listings. Is the backend running?", "error", 5000);
+      const { data } = await getSavedDescriptions();
+      setItems(Array.isArray(data) ? data : (data.data || data.descriptions || []));
+    } catch (err) {
+      const message = err?.response?.data?.message || "Failed to load saved listings. Is the backend running?";
+      setError(message);
+      showToast(message, "error", 5000);
     } finally {
       setIsLoading(false);
     }
   }, [showToast]);
 
-  useEffect(() => { fetchProducts(page); }, [page, fetchProducts]);
+  useEffect(() => { fetchItems(); }, [fetchItems]);
 
-  const handleDelete = async (id) => {
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await fetch(`http://localhost:5000/api/products/${id}`, { method: "DELETE" });
-      setProducts((prev) => prev.filter((p) => p._id !== id));
-      if (pagination) setPagination((prev) => ({ ...prev, total: prev.total - 1 }));
+      await deleteSavedDescription(deleteTarget._id);
+      setItems((prev) => prev.filter((p) => p._id !== deleteTarget._id));
       showToast("Listing deleted", "success");
-    } catch {
-      showToast("Failed to delete listing", "error");
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Failed to delete listing", "error");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
     }
   };
 
   const filtered = searchQuery.trim()
-    ? products.filter((p) =>
-        p.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    ? items.filter((p) =>
+        p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category?.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : products;
+    : items;
 
   return (
     <div className="saved-page">
@@ -247,7 +279,7 @@ export default function Saved() {
               <p className="page-subtitle">
                 {isLoading
                   ? "Loading..."
-                  : `${pagination?.total ?? products.length} listing${(pagination?.total ?? products.length) !== 1 ? "s" : ""} saved in database`}
+                  : `${items.length} listing${items.length !== 1 ? "s" : ""} generated so far`}
               </p>
             </div>
             <Link to="/generator">
@@ -256,12 +288,12 @@ export default function Saved() {
           </div>
 
           {/* Search */}
-          {products.length > 0 && (
+          {items.length > 0 && (
             <div className="saved-search">
               <input
                 type="text"
                 className="saved-search__input"
-                placeholder="🔍 Search by product name or category..."
+                placeholder="🔍 Search by title or category..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -271,12 +303,22 @@ export default function Saved() {
           {/* Loading */}
           {isLoading && (
             <div className="saved-loading">
-              <Loader type="spinner" size="md" text="Loading from MongoDB..." />
+              <Loader type="spinner" size="md" text="Loading your saved listings..." />
+            </div>
+          )}
+
+          {/* Error state (distinct from empty state) */}
+          {!isLoading && error && items.length === 0 && (
+            <div className="saved-empty">
+              <span className="saved-empty__icon">⚠️</span>
+              <h2 className="saved-empty__title">Couldn't load your listings</h2>
+              <p className="saved-empty__body">{error}</p>
+              <Button variant="primary" onClick={fetchItems}>↻ Try Again</Button>
             </div>
           )}
 
           {/* Empty state */}
-          {!isLoading && filtered.length === 0 && (
+          {!isLoading && !error && filtered.length === 0 && (
             <div className="saved-empty">
               <span className="saved-empty__icon">💾</span>
               <h2 className="saved-empty__title">
@@ -285,7 +327,7 @@ export default function Saved() {
               <p className="saved-empty__body">
                 {searchQuery
                   ? `No listings match "${searchQuery}". Try a different search.`
-                  : "Generate a product description and click 💾 Save This Listing."}
+                  : "Generate a product description and it'll be saved here automatically."}
               </p>
               {!searchQuery && (
                 <Link to="/generator">
@@ -298,30 +340,13 @@ export default function Saved() {
           {/* Listings */}
           {!isLoading && filtered.length > 0 && (
             <div className="saved-list">
-              {filtered.map((product) => (
+              {filtered.map((item) => (
                 <ListingCard
-                  key={product._id}
-                  product={product}
-                  onDelete={handleDelete}
+                  key={item._id}
+                  item={item}
+                  onRequestDelete={setDeleteTarget}
                 />
               ))}
-            </div>
-          )}
-
-          {/* Pagination */}
-          {!isLoading && pagination && pagination.totalPages > 1 && (
-            <div className="saved-pagination">
-              <Button variant="secondary" size="sm"
-                disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                ← Previous
-              </Button>
-              <span className="saved-page-info">
-                Page {pagination.page} of {pagination.totalPages}
-              </span>
-              <Button variant="secondary" size="sm"
-                disabled={page >= pagination.totalPages} onClick={() => setPage((p) => p + 1)}>
-                Next →
-              </Button>
             </div>
           )}
 
@@ -329,10 +354,32 @@ export default function Saved() {
       </main>
       <Footer />
 
+      {/* Delete confirmation modal */}
+      <Modal
+        isOpen={!!deleteTarget}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        title="Delete this listing?"
+        size="sm"
+      >
+        <p style={{ margin: "0 0 1.25rem" }}>
+          {deleteTarget && (
+            <>This will permanently delete <strong>{deleteTarget.title}</strong>. This can't be undone.</>
+          )}
+        </p>
+        <div style={{ display: "flex", gap: ".5rem", justifyContent: "flex-end" }}>
+          <Button variant="secondary" size="sm" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button variant="danger" size="sm" onClick={confirmDelete} disabled={deleting}>
+            {deleting ? "Deleting..." : "🗑 Delete"}
+          </Button>
+        </div>
+      </Modal>
+
       <style>{`
         .saved-page {
           min-height:100vh; display:flex; flex-direction:column;
-          background:#f4f9f6; font-family:'Inter','Segoe UI',system-ui,sans-serif;
+          background:var(--color-bg, #f4f9f6); font-family:var(--font-family, 'Inter','Segoe UI',system-ui,sans-serif);
         }
         .saved-main { flex:1; padding:2.5rem 1.5rem; }
         .saved-inner { max-width:900px; margin:0 auto; }
@@ -372,12 +419,8 @@ export default function Saved() {
           font-size:.9rem; color:#6b9e82; max-width:420px;
           margin:0 auto 1.5rem; line-height:1.7;
         }
-        .saved-pagination {
-          display:flex; align-items:center; justify-content:center;
-          gap:1rem; margin-top:2rem;
-        }
-        .saved-page-info { font-size:.875rem; color:#6b9e82; font-weight:600; }
-        @media(max-width:480px){ .saved-main { padding:1.5rem 1rem; } }
+        @media(max-width:768px){ .saved-main { padding:2rem 1.25rem; } }
+        @media(max-width:375px){ .saved-main { padding:1.5rem 1rem; } }
       `}</style>
     </div>
   );
