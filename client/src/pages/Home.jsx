@@ -1,12 +1,12 @@
 // pages/Home.jsx
-// Landing page — uses Navbar, Hero, Card (×6 in grid), and Footer.
+// Landing page — uses Navbar, Hero, Card (x6 in grid), and Footer.
 
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Hero   from "../components/Hero";
 import Card   from "../components/Card";
 import Footer from "../components/Footer";
 
-// ── Feature cards data ──────────────────────────────────────────────────────
 const FEATURES = [
   {
     icon:   "🤖",
@@ -38,33 +38,30 @@ const FEATURES = [
   {
     icon:   "💾",
     title:  "Save Your Listings",
-    body:   "Save generated product descriptions locally and access them anytime from your Saved Listings page.",
+    body:   "Every description you generate is saved automatically to your account and accessible anytime from Saved Listings.",
     accent: "saffron",
   },
   {
     icon:   "🔍",
     title:  "SEO Keywords Included",
-    body:   "The generator also produces 8–12 relevant SEO keywords to improve your product's visibility on search.",
+    body:   "The generator also produces 8-12 relevant SEO keywords to improve your product's visibility on search.",
     accent: "blue",
   },
 ];
 
-// ── Product category cards ──────────────────────────────────────────────────
 const CATEGORIES = [
   { icon: "🌾", title: "Millet Snacks",    body: "Mandua cookies, ragi chips, and finger millet-based healthy snacks.", accent: "green"   },
   { icon: "🫙", title: "Pickles & Achaar", body: "Traditional Pahadi pickles made with mountain herbs and spices.",      accent: "saffron" },
   { icon: "🍹", title: "Juices & Drinks",  body: "Natural buransh (rhododendron) juice, herbal squashes, and more.",    accent: "blue"    },
-  { icon: "🍯", title: "Jams & Preserves", body: "Himalayan fruit jams — apricot, wild strawberry, and kafal.",         accent: "green"   },
+  { icon: "🍯", title: "Jams & Preserves", body: "Himalayan fruit jams - apricot, wild strawberry, and kafal.",         accent: "green"   },
 ];
 
-// ── Component ───────────────────────────────────────────────────────────────
 export default function Home() {
   return (
     <div className="home-page">
       <Navbar />
       <Hero />
 
-      {/* ── Features Section ── */}
       <section className="home-section">
         <div className="home-section__inner">
           <div className="home-section__header">
@@ -82,7 +79,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Product Categories Section ── */}
       <section className="home-section home-section--alt">
         <div className="home-section__inner">
           <div className="home-section__header">
@@ -100,7 +96,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── How It Works ── */}
       <section className="home-section">
         <div className="home-section__inner">
           <div className="home-section__header">
@@ -111,7 +106,7 @@ export default function Home() {
             {[
               { step: "01", title: "Enter Product Details",    desc: "Fill in the product name, ingredients, category, weight, and key features." },
               { step: "02", title: "Choose Tone & Platforms",  desc: "Select your writing tone and the platforms you want to publish on." },
-              { step: "03", title: "Generate & Edit",          desc: "Click Generate — review and edit the AI output in the editable sections." },
+              { step: "03", title: "Generate & Edit",          desc: "Click Generate - review and edit the AI output in the editable sections." },
               { step: "04", title: "Copy & Publish",           desc: "Copy individual sections or everything at once and paste into your listing." },
             ].map((s) => (
               <div key={s.step} className="home-step">
@@ -124,14 +119,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── CTA Banner ── */}
       <section className="home-cta-banner">
         <div className="home-section__inner home-cta-inner">
           <h2 className="home-cta__title">Ready to Write Better Listings?</h2>
           <p className="home-cta__sub">
             Start generating AI-powered product descriptions for your HimShakti products today.
           </p>
-          <a href="/generator" className="home-cta__btn">✦ Open the Generator</a>
+          <Link to="/generator" className="home-cta__btn">✦ Open the Generator</Link>
         </div>
       </section>
 
@@ -146,12 +140,10 @@ export default function Home() {
           font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
         }
 
-        /* Section wrapper */
         .home-section { padding: 4rem 1.5rem; }
         .home-section--alt { background: #edf7f1; }
         .home-section__inner { max-width: 1200px; margin: 0 auto; }
 
-        /* Section header */
         .home-section__header { text-align: center; margin-bottom: 2.5rem; }
         .home-section__eyebrow {
           display: inline-block;
@@ -170,12 +162,10 @@ export default function Home() {
           max-width: 520px; margin: 0 auto; line-height: 1.6;
         }
 
-        /* Grids */
         .home-grid { display: grid; gap: 1.25rem; }
         .home-grid--3 { grid-template-columns: repeat(3, 1fr); }
         .home-grid--4 { grid-template-columns: repeat(4, 1fr); }
 
-        /* Steps */
         .home-steps {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
@@ -213,7 +203,6 @@ export default function Home() {
         }
         .home-step__desc { font-size: .8rem; color: #4a7c5e; margin: 0; line-height: 1.55; }
 
-        /* CTA Banner */
         .home-cta-banner {
           background: linear-gradient(135deg, #1a3a2a, #2d6a4f);
           padding: 4rem 1.5rem;
@@ -242,7 +231,7 @@ export default function Home() {
           box-shadow: 0 7px 22px rgba(244,162,97,.45);
         }
 
-        /* Responsive */
+        /* ── Responsive pass: 900px / 540px / 375px ── */
         @media (max-width: 900px) {
           .home-grid--3 { grid-template-columns: 1fr 1fr; }
           .home-grid--4 { grid-template-columns: 1fr 1fr; }
@@ -252,6 +241,10 @@ export default function Home() {
         @media (max-width: 540px) {
           .home-grid--3, .home-grid--4, .home-steps { grid-template-columns: 1fr; }
           .home-section { padding: 2.5rem 1rem; }
+        }
+        @media (max-width: 375px) {
+          .home-section { padding: 2rem .875rem; }
+          .home-cta-banner { padding: 2.5rem 1rem; }
         }
       `}</style>
     </div>
