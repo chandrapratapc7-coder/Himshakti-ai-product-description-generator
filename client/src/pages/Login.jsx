@@ -1,15 +1,16 @@
 // pages/Login.jsx
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../components/Toast";
 
 export default function Login() {
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
   const from = location.state?.from?.pathname || "/dashboard";
 
   const [email, setEmail] = useState("");
@@ -23,7 +24,7 @@ export default function Login() {
       await login(email, password);
       navigate(from, { replace: true });
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Login failed. Please try again.");
+      showToast(err?.response?.data?.message || "Login failed. Please try again.", "error");
     } finally {
       setSubmitting(false);
     }
@@ -120,7 +121,6 @@ export default function Login() {
           box-shadow: 0 8px 32px rgba(45,106,79,.1);
         }
 
-        /* Header */
         .login-header { text-align: center; margin-bottom: 1.75rem; }
         .login-logo   { font-size: 2.5rem; display: block; margin-bottom: .5rem; }
         .login-title  {
@@ -128,7 +128,6 @@ export default function Login() {
         }
         .login-subtitle { font-size: .875rem; color: #6b9e82; margin: 0; }
 
-        /* Form */
         .login-form { display: flex; flex-direction: column; gap: .875rem; }
         .lf-field   { display: flex; flex-direction: column; gap: .35rem; }
         .lf-label   { font-size: .82rem; font-weight: 600; color: #1a3a2a; }
@@ -140,12 +139,10 @@ export default function Login() {
         }
         .lf-input:focus { border-color: #2d6a4f; background: #fff; }
 
-        /* Divider */
         .lf-divider { display: flex; align-items: center; gap: .75rem; margin: .25rem 0; }
         .lf-divider-line { flex: 1; height: 1px; background: #d5e8d4; }
         .lf-divider-text { font-size: .8rem; color: #6b9e82; }
 
-        /* Button */
         .lf-btn {
           width: 100%; padding: .75rem;
           background: #2d6a4f; color: #fff;
@@ -167,10 +164,14 @@ export default function Login() {
         }
         .lf-google-btn:hover { background: #f7faf8; }
 
-        /* Register link */
         .lf-register { text-align: center; font-size: .82rem; color: #6b9e82; margin: 0; }
         .lf-link { color: #2d6a4f; font-weight: 700; text-decoration: none; }
         .lf-link:hover { text-decoration: underline; }
+
+        /* ── Responsive pass ── */
+        @media (max-width: 480px) {
+          .login-card { padding: 2rem 1.5rem; }
+        }
       `}</style>
     </div>
   );

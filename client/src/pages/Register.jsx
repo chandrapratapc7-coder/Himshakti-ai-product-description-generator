@@ -1,14 +1,15 @@
 // pages/Register.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../components/Toast";
 
 export default function Register() {
   const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,11 +21,11 @@ export default function Register() {
     e.preventDefault();
 
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      showToast("Password must be at least 6 characters", "error");
       return;
     }
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      showToast("Passwords do not match", "error");
       return;
     }
 
@@ -33,7 +34,7 @@ export default function Register() {
       await register(name, email, password);
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Registration failed. Please try again.");
+      showToast(err?.response?.data?.message || "Registration failed. Please try again.", "error");
     } finally {
       setSubmitting(false);
     }
@@ -158,7 +159,6 @@ export default function Register() {
           box-shadow: 0 8px 32px rgba(45,106,79,.1);
         }
 
-        /* Header */
         .register-header { text-align: center; margin-bottom: 1.75rem; }
         .register-logo   { font-size: 2.5rem; display: block; margin-bottom: .5rem; }
         .register-title  {
@@ -166,7 +166,6 @@ export default function Register() {
         }
         .register-subtitle { font-size: .875rem; color: #6b9e82; margin: 0; line-height: 1.5; }
 
-        /* Form */
         .register-form { display: flex; flex-direction: column; gap: .875rem; }
         .rf-field   { display: flex; flex-direction: column; gap: .35rem; }
         .rf-label   { font-size: .82rem; font-weight: 600; color: #1a3a2a; }
@@ -178,12 +177,10 @@ export default function Register() {
         }
         .rf-input:focus { border-color: #2d6a4f; background: #fff; }
 
-        /* Divider */
         .rf-divider { display: flex; align-items: center; gap: .75rem; margin: .25rem 0; }
         .rf-divider-line { flex: 1; height: 1px; background: #d5e8d4; }
         .rf-divider-text { font-size: .8rem; color: #6b9e82; }
 
-        /* Button */
         .rf-btn {
           width: 100%; padding: .75rem;
           background: #2d6a4f; color: #fff;
@@ -205,10 +202,14 @@ export default function Register() {
         }
         .rf-google-btn:hover { background: #f7faf8; }
 
-        /* Login link */
         .rf-login { text-align: center; font-size: .82rem; color: #6b9e82; margin: 0; }
         .rf-link { color: #2d6a4f; font-weight: 700; text-decoration: none; }
         .rf-link:hover { text-decoration: underline; }
+
+        /* ── Responsive pass ── */
+        @media (max-width: 480px) {
+          .register-card { padding: 2rem 1.5rem; }
+        }
       `}</style>
     </div>
   );
