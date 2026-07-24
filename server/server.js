@@ -23,7 +23,12 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+
+// Week 8: raised from Express's default 100kb limit to accommodate base64-encoded
+// product images (ProductForm caps uploads at 5MB, which becomes ~6.7MB as base64 —
+// 10mb gives headroom without leaving the limit wide open).
+app.use(express.json({ limit: '10mb' }));
+
 app.use(cookieParser());
 app.use(passport.initialize());
 app.use('/api', apiLimiter); // general rate limit on all API routes
@@ -39,6 +44,17 @@ app.get('/api/health', (req, res) => res.json({ success: true, message: 'HimShak
 // --- Error handler ---
 app.use((err, req, res, next) => {
   console.error(err.stack);
+
+  // express.json() throws a PayloadTooLargeError (type "entity.too.large") when
+  // a request exceeds the limit above — surface a clearer message than the
+  // raw Express default so this is easy to diagnose if the limit ever needs raising again.
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({
+      success: false,
+      message: 'Upload too large. Please use an image under 5MB.',
+    });
+  }
+
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal server error',

@@ -15,7 +15,6 @@ import Loader        from "../components/Loader";
 import { useToast }  from "../components/Toast";
 import { generateDescription, regenerateDescription } from "../services/api";
 
-// ── Initial form state ──────────────────────────────────────────────────
 const INITIAL_FORM = {
   productName: "",
   ingredients: "",
@@ -25,18 +24,17 @@ const INITIAL_FORM = {
   tone:        "Health-focused",
   platforms:   [],
   keywords:    "",
+  image:       null,   // base64 data URL from ProductForm's upload, or null
+  imageError:  null,
 };
 
-// ── Mapping: form display values → backend enum values ──────────────────
-// The backend's GeneratedDescription schema only accepts these exact enums.
-// This keeps ProductForm's friendlier display labels untouched.
 const CATEGORY_TO_BACKEND = {
   "Snacks / Baked Goods": "Snacks",
   "Juices / Drinks":      "Juices",
   "Jams / Preserves":     "Jams",
   "Pickles / Achaar":     "Pickles",
   "Chutneys / Sauces":    "Chutneys",
-  "Namkeen / Trail Mix":  "Snacks", // closest backend category
+  "Namkeen / Trail Mix":  "Snacks",
 };
 
 const TONE_TO_BACKEND = {
@@ -53,7 +51,6 @@ function toBackendTone(displayTone) {
   return TONE_TO_BACKEND[displayTone] || "health";
 }
 
-// ── Validation ──────────────────────────────────────────────────────────
 function validate(form) {
   const errors = {};
   if (!form.productName || form.productName.trim().length < 3)
@@ -73,20 +70,18 @@ function validate(form) {
   return errors;
 }
 
-// ── Main Generator Page ─────────────────────────────────────────────────
 export default function Generator() {
   const navigate = useNavigate();
   const [formData, setFormData]         = useState(INITIAL_FORM);
   const [errors, setErrors]             = useState({});
   const [isLoading, setIsLoading]       = useState(false);
   const [output, setOutput]             = useState(null);
-  const [generatedId, setGeneratedId]   = useState(null); // Mongo _id of the saved doc
+  const [generatedId, setGeneratedId]   = useState(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [activeTab, setActiveTab]       = useState("content");
 
   const { showToast } = useToast();
 
-  // Maps the backend's response shape to what OutputEditor/PreviewCard expect
   const mapBackendOutput = (data) => ({
     title:     data.title,
     shortDesc: data.shortDescription,
@@ -96,7 +91,6 @@ export default function Generator() {
     usage:     data.usageStorage,
   });
 
-  // ── Generate (fresh) ─────────────────────────────────────────────────
   const handleSubmit = async () => {
     const foundErrors = validate(formData);
     if (Object.keys(foundErrors).length > 0) {
@@ -121,12 +115,13 @@ export default function Generator() {
         weight:      formData.weight,
         category:    toBackendCategory(formData.category),
         features:    formData.features,
-        platform:    formData.platforms,           // array, not a single string
+        platform:    formData.platforms,
         tone:        toBackendTone(formData.tone),
         keywords:    formData.keywords,
+        image:       formData.image, // base64 data URL, or null — see GeneratedDescription schema
       });
 
-      const data = response.data.data; // axios response -> {success, data, meta}
+      const data = response.data.data;
       setOutput(mapBackendOutput(data));
       setGeneratedId(data._id);
 
@@ -158,10 +153,8 @@ export default function Generator() {
     }
   };
 
-  // ── Regenerate (varies temperature/prompt on the existing saved doc) ──
   const handleRegenerate = async () => {
     if (!generatedId) {
-      // No saved doc yet (shouldn't normally happen) — fall back to a fresh generate
       return handleSubmit();
     }
 
@@ -205,7 +198,6 @@ export default function Generator() {
           </p>
         </div>
 
-        {/* Mobile tab switcher */}
         <div className="gen-mobile-tabs">
           <button
             className={`gen-tab ${activeTab === "content" ? "gen-tab--active" : ""}`}
@@ -222,7 +214,6 @@ export default function Generator() {
         </div>
 
         <div className="gen-grid">
-          {/* Left — Input Form */}
           <section className="gen-col gen-col--form">
             <ProductForm
               formData={formData}
@@ -232,20 +223,16 @@ export default function Generator() {
               isLoading={isLoading}
             />
 
-            {/* Generated + auto-saved confirmation — generation already
-                persists to MongoDB tied to the logged-in user, so there's
-                no separate "save" action; this just links to where it landed. */}
             {output && generatedId && (
               <button
                 className="gen-save-btn"
-                onClick={() => navigate("/saved-descriptions")}
+                onClick={() => navigate("/saved")}
               >
-                ✓ Saved — View in Saved Descriptions
+                ✓ Saved — View in Saved Listings
               </button>
             )}
           </section>
 
-          {/* Right — Output + Preview */}
           <section className="gen-col gen-col--right">
             <div className={`gen-right-block ${activeTab === "content" ? "gen-right-block--show" : ""}`}>
               <OutputEditor
@@ -288,7 +275,6 @@ export default function Generator() {
         }
         .gen-col--right { display: flex; flex-direction: column; gap: 1.5rem; }
 
-        /* Save/confirmation button */
         .gen-save-btn {
           width: 100%; margin-top: .875rem;
           padding: .75rem; border: 2px solid #2d6a4f;

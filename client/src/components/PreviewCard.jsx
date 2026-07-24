@@ -3,8 +3,8 @@
 // Amazon-style product listing card.
 //
 // Props:
-//   formData — { productName, category, weight, platforms }   (from ProductForm)
-//   output   — null | { title, shortDesc, bullets[], keywords[] }  (from generator)
+//   formData — { productName, category, weight, platforms, image }   (from ProductForm)
+//   output   — null | { title, shortDesc, bullets[], keywords[] }    (from generator)
 //   platform — "Amazon" | "Flipkart" | "Meesho" | "Instagram" | "WhatsApp" | "D2C"
 //              (default: first selected platform, else "Amazon")
 
@@ -82,14 +82,20 @@ export default function PreviewCard({ formData = {}, output = null, platform }) 
         </div>
 
         <div className="pc-listing">
-          {/* Image placeholder */}
-          <div className="pc-image">
-            <span className="pc-image__icon">🏔</span>
-            <span className="pc-image__text">
-              {formData.category || "Product"} Image
-            </span>
-            <span className="pc-image__weight">{formData.weight || "—"}</span>
-          </div>
+          {/* Product image — real upload if present, placeholder otherwise */}
+          {formData.image ? (
+            <div className="pc-image pc-image--photo">
+              <img src={formData.image} alt={formData.productName || "Product"} className="pc-image__photo" />
+            </div>
+          ) : (
+            <div className="pc-image">
+              <span className="pc-image__icon">🏔</span>
+              <span className="pc-image__text">
+                {formData.category || "Product"} Image
+              </span>
+              <span className="pc-image__weight">{formData.weight || "—"}</span>
+            </div>
+          )}
 
           {/* Details */}
           <div className="pc-details">
@@ -212,6 +218,16 @@ export default function PreviewCard({ formData = {}, output = null, platform }) 
           border: 1.5px dashed #b5d9c5;
           display: flex; flex-direction: column; align-items: center; justify-content: center;
           gap: .35rem; text-align: center;
+          overflow: hidden;
+        }
+        .pc-image--photo {
+          border: 1.5px solid #e6e6e6;
+          background: #fafafa;
+          padding: 0;
+        }
+        .pc-image__photo {
+          width: 100%; height: 100%;
+          object-fit: cover;
         }
         .pc-image__icon   { font-size: 2.5rem; }
         .pc-image__text   { font-size: .8rem; font-weight: 700; color: #2d6a4f; }

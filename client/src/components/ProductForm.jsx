@@ -1,6 +1,7 @@
 // ProductForm.jsx
 // Collects all product details needed for AI description generation.
 
+import { useRef } from "react";
 import ToneSelector from "./ToneSelector";
 import PlatformSelector from "./PlatformSelector";
 
@@ -19,7 +20,12 @@ const WEIGHTS = [
   "200ml", "500ml", "1L",
 ];
 
+const MAX_IMAGE_MB = 5;
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 export default function ProductForm({ formData, onChange, errors, onSubmit, isLoading }) {
+  const fileInputRef = useRef(null);
+
   const handleField = (field) => (e) =>
     onChange({ ...formData, [field]: e.target.value });
 
@@ -28,6 +34,34 @@ export default function ProductForm({ formData, onChange, errors, onSubmit, isLo
 
   const handlePlatforms = (platforms) =>
     onChange({ ...formData, platforms });
+
+  // ── Image upload: read file → base64 data URL, store on formData.image ──
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      onChange({ ...formData, imageError: "Please upload a JPEG, PNG, or WebP image" });
+      return;
+    }
+    if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+      onChange({ ...formData, imageError: `Image must be under ${MAX_IMAGE_MB}MB` });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      onChange({ ...formData, image: reader.result, imageError: null });
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input so selecting the same file again still fires onChange
+    e.target.value = "";
+  };
+
+  const handleRemoveImage = () => {
+    onChange({ ...formData, image: null, imageError: null });
+  };
 
   return (
     <form className="product-form" onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
@@ -123,6 +157,46 @@ export default function ProductForm({ formData, onChange, errors, onSubmit, isLo
         {errors.features && <p className="field-error">{errors.features}</p>}
       </div>
 
+      {/* ── Product Image (optional) ── */}
+      <div className="field-group">
+        <label className="field-label" htmlFor="productImage">
+          Product Image <span className="field-optional">(optional)</span>
+        </label>
+        <p className="field-hint">Used in the preview card and saved listings. JPEG, PNG, WebP up to {MAX_IMAGE_MB}MB.</p>
+
+        <input
+          ref={fileInputRef}
+          id="productImage"
+          type="file"
+          accept={ACCEPTED_TYPES.join(",")}
+          onChange={handleImageSelect}
+          className="image-input-hidden"
+        />
+
+        {!formData.image ? (
+          <button
+            type="button"
+            className="image-dropzone"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Click to upload product image
+          </button>
+        ) : (
+          <div className="image-preview">
+            <img src={formData.image} alt="Product preview" className="image-preview__img" />
+            <button
+              type="button"
+              className="image-preview__remove"
+              onClick={handleRemoveImage}
+              aria-label="Remove image"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+        {formData.imageError && <p className="field-error">{formData.imageError}</p>}
+      </div>
+
       {/* ── Tone Selector ── */}
       <ToneSelector
         value={formData.tone}
@@ -213,6 +287,11 @@ export default function ProductForm({ formData, onChange, errors, onSubmit, isLo
           color: #7a9e8a;
           font-size: 0.8rem;
         }
+        .field-hint {
+          font-size: 0.78rem;
+          color: #7a9e8a;
+          margin: -0.15rem 0 0.6rem;
+        }
 
         .field-input {
           width: 100%;
@@ -251,6 +330,56 @@ export default function ProductForm({ formData, onChange, errors, onSubmit, isLo
           gap: 0.25rem;
         }
         .field-error::before { content: "⚠"; }
+
+        /* ── Image upload ── */
+        .image-input-hidden { display: none; }
+        .image-dropzone {
+          width: 100%;
+          padding: 1.5rem 1rem;
+          background: #f7faf8;
+          border: 1.5px dashed #c8dfc8;
+          border-radius: 10px;
+          color: #6b9e82;
+          font-size: 0.875rem;
+          font-family: inherit;
+          cursor: pointer;
+          transition: border-color 0.15s, background 0.15s;
+        }
+        .image-dropzone:hover {
+          border-color: #2d6a4f;
+          background: #edf7f1;
+        }
+        .image-preview {
+          position: relative;
+          display: inline-block;
+        }
+        .image-preview__img {
+          width: 120px;
+          height: 120px;
+          object-fit: cover;
+          border-radius: 10px;
+          border: 1.5px solid #d5e8d4;
+          display: block;
+        }
+        .image-preview__remove {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: #1a3a2a;
+          color: #fff;
+          border: 2px solid #fff;
+          font-size: 0.7rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+          padding: 0;
+        }
+        .image-preview__remove:hover { background: #c0392b; }
 
         .submit-btn {
           width: 100%;

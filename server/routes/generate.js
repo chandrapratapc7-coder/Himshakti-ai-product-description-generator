@@ -51,6 +51,10 @@ router.post('/', protect, generateLimiter, validateGenerateInput, async (req, re
       category: input.category,
       platform: input.platform,
       tone: input.tone,
+      // Week 8: optional base64 product image from ProductForm's upload.
+      // Not validated by validateGenerateInput (it's optional/unstructured),
+      // so pass it through as-is; schema default is null if omitted.
+      image: input.image || null,
       ...aiOutput,
     });
 

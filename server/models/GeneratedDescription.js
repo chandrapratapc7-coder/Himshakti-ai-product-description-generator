@@ -32,6 +32,12 @@ const GeneratedDescriptionSchema = new mongoose.Schema(
       required: true,
     },
 
+    // --- NEW for Week 8: optional product image, stored as a base64 data URL.
+    // Kept simple (no S3/Cloudinary) since this is an internship-scale project;
+    // note this will bloat document size for large images — 5MB client-side
+    // cap is enforced in ProductForm.jsx before this ever reaches the request.
+    image: { type: String, default: null },
+
     title: String,
     shortDescription: String,
     longDescription: String,
