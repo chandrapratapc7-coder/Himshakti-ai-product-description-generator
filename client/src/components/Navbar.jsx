@@ -23,7 +23,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-inner">
 
-        {/* ── Brand ── */}
+        {/* -- Brand -- */}
         <Link to="/" className="brand">
           <span className="brand-icon">🏔</span>
           <div className="brand-text">
@@ -32,7 +32,7 @@ export default function Navbar() {
           </div>
         </Link>
 
-        {/* ── Desktop links ── */}
+        {/* -- Desktop links -- */}
         <ul className="nav-links">
           {navLinks.map((link) => (
             <li key={link.path}>
@@ -46,7 +46,7 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* ── Right side: theme toggle + CTA ── */}
+        {/* -- Right side: theme toggle + CTA -- */}
         <div className="nav-right">
           <ThemeToggle size="sm" />
           <Link to="/generator" className="nav-cta">
@@ -54,7 +54,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* ── Mobile: theme toggle + hamburger ── */}
+        {/* -- Mobile: theme toggle + hamburger -- */}
         <div className="nav-mobile-right">
           <ThemeToggle size="sm" />
           <button
@@ -69,7 +69,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* ── Mobile menu ── */}
+      {/* -- Mobile menu -- */}
       {menuOpen && (
         <div className="mobile-menu">
           {navLinks.map((link) => (
@@ -95,11 +95,11 @@ export default function Navbar() {
           transition: background .2s, border-color .2s;
         }
 
-        /* Dark mode */
+        /* Dark mode -- neutral charcoal, green reserved for active link + CTA */
         .dark .navbar {
-          background: rgba(15,36,25,0.97);
-          border-bottom-color: #1a3a2a;
-          box-shadow: 0 1px 8px rgba(0,0,0,0.3);
+          background: rgba(15,17,21,0.97);
+          border-bottom-color: #30363D;
+          box-shadow: 0 1px 8px rgba(0,0,0,0.45);
         }
 
         .navbar-inner {
@@ -118,11 +118,12 @@ export default function Navbar() {
         .brand-name {
           font-size: 1.05rem; font-weight: 800; color: #1a3a2a; letter-spacing: -.01em;
         }
-        .dark .brand-name { color: #e0f2e9; }
+        .dark .brand-name { color: #F3F4F6; }
         .brand-tagline {
           font-size: .65rem; color: #6b9e82; font-weight: 500;
           letter-spacing: .04em; text-transform: uppercase;
         }
+        .dark .brand-tagline { color: #8B949E; }
 
         /* Desktop nav links */
         .nav-links {
@@ -135,10 +136,12 @@ export default function Navbar() {
           border-radius: 6px; transition: background .14s, color .14s;
         }
         .nav-link:hover { background: #f0faf4; color: #1a3a2a; }
-        .dark .nav-link { color: #7dcca0; }
-        .dark .nav-link:hover { background: #1a3a2a; color: #e0f2e9; }
+        .dark .nav-link { color: #C9D1D9; }
+        .dark .nav-link:hover { background: #1C2128; color: #F3F4F6; }
         .nav-link--active { color: #2d6a4f; background: #e8f5ee; }
-        .dark .nav-link--active { color: #7dcca0; background: #1a3a2a; }
+        /* Active link is the one deliberate green accent in the nav -- matches
+           spec's "active states" carve-out, not a general background tint */
+        .dark .nav-link--active { color: #22C55E; background: rgba(34, 197, 94, .12); }
 
         /* Right group */
         .nav-right {
@@ -153,6 +156,10 @@ export default function Navbar() {
           white-space: nowrap;
         }
         .nav-cta:hover { background: #1a4a34; transform: translateY(-1px); }
+        /* Primary CTA button -- legitimate green use per spec, shifted to the
+           dark-mode accent shade for correct contrast against the dark navbar */
+        .dark .nav-cta { background: #22C55E; color: #0F1115; }
+        .dark .nav-cta:hover { background: #16A34A; }
 
         /* Mobile right group */
         .nav-mobile-right {
@@ -166,7 +173,7 @@ export default function Navbar() {
           width: 22px; height: 2px; background: #2d6a4f;
           border-radius: 2px; transition: transform .2s, opacity .2s;
         }
-        .dark .hamburger-line { background: #7dcca0; }
+        .dark .hamburger-line { background: #F3F4F6; }
         .hamburger-line--open-1 { transform: translateY(7px) rotate(45deg); }
         .hamburger-line--open-2 { opacity: 0; }
         .hamburger-line--open-3 { transform: translateY(-7px) rotate(-45deg); }
@@ -178,13 +185,13 @@ export default function Navbar() {
           padding: .5rem 1.25rem 1rem;
           background: #fff;
         }
-        .dark .mobile-menu { background: #0f2419; border-top-color: #1a3a2a; }
+        .dark .mobile-menu { background: #0F1115; border-top-color: #30363D; }
         .mobile-link {
           padding: .7rem 0; font-size: .95rem; font-weight: 600;
           color: #1a3a2a; text-decoration: none;
           border-bottom: 1px solid #edf7f0;
         }
-        .dark .mobile-link { color: #e0f2e9; border-bottom-color: #1a3a2a; }
+        .dark .mobile-link { color: #F3F4F6; border-bottom-color: #30363D; }
         .mobile-link:last-child { border-bottom: none; }
 
         /* Responsive */

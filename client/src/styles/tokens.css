@@ -45,45 +45,68 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   DARK MODE — full site overrides
-   Applied when ThemeContext adds class="dark" to <html>
+   DARK MODE — professional neutral theme (GitHub Dark / Linear / Vercel
+   inspired), green used strictly as an ACCENT, never as a base/background
+   tint. Applied when ThemeContext adds class="dark" to <html>.
+
+   Palette reference:
+     Background        #0F1115
+     Secondary BG      #161B22
+     Card BG           #1C2128
+     Elevated Surface  #24292F
+     Primary Text      #F3F4F6
+     Secondary Text    #C9D1D9
+     Muted Text        #8B949E
+     Border            #30363D
+     Divider           #2D333B
+     Primary Accent    #22C55E   (buttons, active states, links, focus, success)
+     Accent Hover      #16A34A
+     Accent Active     #15803D
+     Danger            #EF4444
+     Warning           #F59E0B
+     Info              #3B82F6
    ══════════════════════════════════════════════════════════════════════ */
 
 /* ── CSS variable overrides ── */
 .dark {
-  --color-bg:            #0b1e14;
-  --color-bg-alt:        #0f2419;
-  --color-surface:       #132d1e;
-  --color-surface-alt:   #1a3a2a;
-  --color-text:          #e0f2e9;
-  --color-muted:         #a8d8b4;
-  --color-subtle:        #7dcca0;
-  --color-border:        #1f4a30;
-  --color-border-strong: #2d6a4f;
-  --color-primary:       #4a9b6f;
-  --color-primary-light: #1a3a2a;
-  --color-error-bg:      #2d1515;
-  --shadow-card:  0 2px 12px rgba(0,0,0,.35);
-  --shadow-hover: 0 8px 24px rgba(0,0,0,.45);
+  --color-bg:            #0F1115;
+  --color-bg-alt:        #161B22;
+  --color-surface:       #1C2128;
+  --color-surface-alt:   #24292F;
+  --color-text:          #F3F4F6;
+  --color-muted:         #C9D1D9;
+  --color-subtle:        #8B949E;
+  --color-border:        #30363D;
+  --color-border-strong: #3D444D;
+  --color-primary:       #22C55E;
+  --color-primary-dark:  #16A34A;
+  --color-primary-light: rgba(34, 197, 94, 0.12);
+  --color-error:         #EF4444;
+  --color-error-bg:      rgba(239, 68, 68, 0.12);
+  --color-warning:       #F59E0B;
+  --color-warning-bg:    rgba(245, 158, 11, 0.12);
+  --color-info:          #3B82F6;
+  --shadow-card:  0 2px 12px rgba(0,0,0,.45);
+  --shadow-hover: 0 8px 28px rgba(0,0,0,.55);
 }
 
-/* ── Body & page backgrounds ── */
-.dark body                { background: #0b1e14; color: #e0f2e9; }
+/* ── Body & page backgrounds — neutral charcoal, no green tint ── */
+.dark body                { background: #0F1115; color: #F3F4F6; }
 .dark .home-page,
 .dark .about-page,
 .dark .saved-page,
 .dark .register-page,
 .dark .login-page,
 .dark .dash-page,
-.dark .gen-page           { background: #0b1e14; }
+.dark .gen-page           { background: #0F1115; }
 
 /* ── Sections ── */
-.dark .home-section       { background: #0b1e14; }
-.dark .home-section--alt  { background: #0f2419; }
-.dark .hero-section       { background: linear-gradient(160deg,#0f2419,#132d1e,#0b1e14); border-bottom-color: #1f4a30; }
-.dark .home-cta-banner    { background: linear-gradient(135deg,#0b1e14,#132d1e); }
+.dark .home-section       { background: #0F1115; }
+.dark .home-section--alt  { background: #161B22; }
+.dark .hero-section       { background: linear-gradient(160deg,#161B22,#1C2128,#0F1115); border-bottom-color: #30363D; }
+.dark .home-cta-banner    { background: linear-gradient(135deg,#0F1115,#1C2128); }
 
-/* ── Cards ── */
+/* ── Cards — slightly lighter than page background, subtle borders ── */
 .dark .hs-card,
 .dark .about-block,
 .dark .about-tech,
@@ -95,15 +118,18 @@ body {
 .dark .register-card,
 .dark .product-form,
 .dark .output-panel       {
-  background: #132d1e;
-  border-color: #1f4a30;
-  box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  background: #1C2128;
+  border-color: #30363D;
+  box-shadow: 0 2px 12px rgba(0,0,0,.45);
 }
 
-.dark .dash-placeholder   { border-color: #2d6a4f; }
-.dark .saved-empty        { background: #132d1e; border-color: #2d6a4f; }
+.dark .dash-placeholder   { border-color: #30363D; }
+.dark .saved-empty        { background: #1C2128; border-color: #30363D; }
 
-/* ── Text ── */
+/* Dashboard stat cards get a subtle accent top border — tasteful accent, not a full tint */
+.dark .dash-stat-card     { border-top: 3px solid #22C55E; }
+
+/* ── Text hierarchy ── */
 .dark .home-section__title,
 .dark .page-title,
 .dark .form-title,
@@ -117,7 +143,7 @@ body {
 .dark .gen-title,
 .dark .hero-title,
 .dark .dash-stat__value,
-.dark .empty-title         { color: #e0f2e9; }
+.dark .empty-title         { color: #F3F4F6; }
 
 .dark .home-section__subtitle,
 .dark .page-subtitle,
@@ -135,95 +161,112 @@ body {
 .dark .pc-shortdesc,
 .dark .dash-stat__label,
 .dark .dash-stat__note,
-.dark .sl-card__date        { color: #a8d8b4; }
+.dark .sl-card__date        { color: #C9D1D9; }
 
+/* Eyebrow/label text — the one place green shows up as text, deliberately kept
+   small and used only for accent labels, not body copy */
 .dark .home-section__eyebrow,
 .dark .page-eyebrow,
 .dark .brand-tagline,
 .dark .oe-section__label,
-.dark .sl-section__label    { color: #4a9b6f; }
+.dark .sl-section__label    { color: #4ADE80; }
 
-/* ── Inputs ── */
+/* ── Inputs — visually separated from background, green only on focus ── */
 .dark .field-input,
 .dark .hsif__input,
 .dark .hssf__select,
 .dark .lf-input,
 .dark .rf-input             {
-  background: #0f2419;
-  border-color: #1f4a30;
-  color: #e0f2e9;
+  background: #161B22;
+  border-color: #30363D;
+  color: #F3F4F6;
+}
+.dark .field-input::placeholder,
+.dark .hsif__input::placeholder,
+.dark .lf-input::placeholder,
+.dark .rf-input::placeholder {
+  color: #8B949E;
 }
 .dark .field-input:focus,
 .dark .hsif__input:focus,
 .dark .hssf__select:focus   {
-  border-color: #4a9b6f;
-  background: #132d1e;
-  box-shadow: 0 0 0 3px rgba(74,155,111,.15);
+  border-color: #22C55E;
+  background: #1C2128;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, .25);
 }
+.dark .field-input--error   { background: rgba(239, 68, 68, .1); border-color: #EF4444; }
 
 /* ── Output editor sections ── */
-.dark .oe-section            { border-color: #1f4a30; }
-.dark .oe-section__head      { background: #0f2419; border-bottom-color: #1f4a30; }
-.dark .oe-textarea           { background: #132d1e; color: #e0f2e9; border-color: #1f4a30; }
-.dark .oe-textarea:focus     { border-color: #4a9b6f; background: #1a3a2a; }
+.dark .oe-section            { border-color: #30363D; }
+.dark .oe-section__head      { background: #161B22; border-bottom-color: #30363D; }
+.dark .oe-textarea            { background: #1C2128; color: #F3F4F6; border-color: #30363D; }
+.dark .oe-textarea:focus      { border-color: #22C55E; background: #24292F; box-shadow: 0 0 0 3px rgba(34, 197, 94, .2); }
 .dark .output-panel--empty,
-.dark .output-panel--loading { background: #132d1e; }
-.dark .oe-topbar             { border-bottom-color: #1f4a30; }
+.dark .output-panel--loading { background: #1C2128; }
+.dark .oe-topbar             { border-bottom-color: #30363D; }
+.dark .oe-copy-btn           { background: #24292F; border-color: #30363D; color: #C9D1D9; }
+.dark .oe-copy-btn:hover     { background: #2D333B; color: #F3F4F6; border-color: #22C55E; }
 
-/* ── Chips, pills, badges ── */
-.dark .sl-chip               { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
-.dark .sl-chip--tone         { background: #1a3a2a; color: #4a9b6f; }
-.dark .about-tech__pill      { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
-.dark .hero-badge            { background: #1a3a2a; border-color: #2d6a4f; color: #7dcca0; }
-.dark .home-section__eyebrow { background: #1a3a2a; }
-.dark .page-eyebrow          { background: #1a3a2a; }
-.dark .dash-stat-card        { border-top-color: #4a9b6f; }
-.dark .oe-copy-btn           { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
-.dark .oe-copy-btn:hover     { background: #132d1e; color: #e0f2e9; }
+/* ── Chips, pills, badges — neutral surface by default ── */
+.dark .sl-chip               { background: #24292F; border-color: #30363D; color: #C9D1D9; }
+/* "Tone" chip is a deliberate highlight — legitimate accent use, matches spec's
+   "active states" / brand-identity carve-out, not a general UI tint */
+.dark .sl-chip--tone         { background: rgba(34, 197, 94, .15); border-color: rgba(34, 197, 94, .35); color: #4ADE80; }
+.dark .about-tech__pill      { background: #24292F; border-color: #30363D; color: #C9D1D9; }
+.dark .hero-badge            { background: #24292F; border-color: #30363D; color: #C9D1D9; }
+.dark .home-section__eyebrow,
+.dark .page-eyebrow          { background: #24292F; }
 
-/* ── Mobile tab switcher (Generator page) ── */
-.dark .gen-mobile-tabs       { background: #132d1e; border-color: #1f4a30; }
-.dark .gen-tab               { color: #7dcca0; }
-.dark .gen-tab--active       { background: #2d6a4f; color: #fff; }
+/* ── Mobile tab switcher (Generator page) — active tab is the accent ── */
+.dark .gen-mobile-tabs       { background: #1C2128; border-color: #30363D; }
+.dark .gen-tab               { color: #8B949E; }
+.dark .gen-tab--active       { background: #22C55E; color: #0F1115; }
 
-/* ── Tone selector ── */
-.dark .tone-card             { background: #132d1e; border-color: #1f4a30; }
-.dark .tone-card:hover       { border-color: #4a9b6f; }
-.dark .tone-card--selected   { background: #1a3a2a; border-color: #4a9b6f; }
-.dark .tone-label            { color: #e0f2e9; }
-.dark .tone-description      { color: #7dcca0; }
+/* ── Tone selector — hover/selected are the only green states ── */
+.dark .tone-card             { background: #1C2128; border-color: #30363D; }
+.dark .tone-card:hover       { border-color: #22C55E; box-shadow: 0 2px 10px rgba(34, 197, 94, .12); }
+.dark .tone-card--selected   { background: rgba(34, 197, 94, .1); border-color: #22C55E; box-shadow: 0 0 0 3px rgba(34, 197, 94, .15); }
+.dark .tone-label            { color: #F3F4F6; }
+.dark .tone-description      { color: #8B949E; }
+.dark .tone-example          { color: #8B949E; }
 
-/* ── Platform selector ── */
-.dark .platform-pill         { background: #132d1e; border-color: #1f4a30; color: #7dcca0; }
+/* ── Platform selector — neutral by default; per-platform selected colors
+   are already handled inline via JS (brand colors like Amazon orange), left
+   untouched since those aren't part of the green-tint problem ── */
+.dark .platform-pill         { background: #1C2128; border-color: #30363D; color: #C9D1D9; }
 .dark .platform-header .field-label,
 .dark .tone-selector-wrapper .field-label,
 .dark .field-label,
 .dark .hsif__label,
 .dark .hssf__label,
 .dark .lf-label,
-.dark .rf-label              { color: #e0f2e9; }
+.dark .rf-label              { color: #F3F4F6; }
+.dark .action-btn            { color: #4ADE80; }
+.dark .action-btn:hover      { color: #22C55E; }
 
 /* ── Preview card ── */
-.dark .pc-frame              { border-color: #1f4a30; background: #132d1e; }
-.dark .pc-frame__topbar      { background: #0f2419; border-bottom-color: #1f4a30; }
-.dark .pc-listing            { background: #132d1e; }
-.dark .pc-title              { color: #e0f2e9; }
-.dark .pc-image              { background: linear-gradient(135deg,#1a3a2a,#132d1e); border-color: #2d6a4f; }
-.dark .pc-keywords           { background: #0f2419; border-top-color: #1f4a30; }
-.dark .pc-keyword            { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
-.dark .pc-delivery           { color: #7dcca0; }
-.dark .pc-btn--cart          { background: #1a3a2a; color: #a8d8b4; border-color: #1f4a30; }
-.dark .pc-price              { color: #e0f2e9; }
+.dark .pc-frame              { border-color: #30363D; background: #1C2128; }
+.dark .pc-frame__topbar      { background: #161B22; border-bottom-color: #30363D; }
+.dark .pc-listing            { background: #1C2128; }
+.dark .pc-title              { color: #F3F4F6; }
+.dark .pc-image              { background: linear-gradient(135deg,#1C2128,#24292F); border-color: #30363D; }
+.dark .pc-keywords           { background: #161B22; border-top-color: #30363D; }
+.dark .pc-keyword            { background: #24292F; border-color: #30363D; color: #C9D1D9; }
+.dark .pc-delivery           { color: #8B949E; }
+.dark .pc-btn--cart          { background: #24292F; color: #C9D1D9; border-color: #30363D; }
+.dark .pc-price              { color: #F3F4F6; }
+.dark .pc-rating__score      { color: #F3F4F6; }
+.dark .pc-rating__count      { color: #8B949E; }
 
 /* ── Section card (SectionCard.jsx) ── */
-.dark .hscard                { background: #132d1e; border-color: #1f4a30; }
-.dark .hscard__title         { color: #e0f2e9; }
-.dark .hscard__subtitle      { color: #7dcca0; }
+.dark .hscard                { background: #1C2128; border-color: #30363D; }
+.dark .hscard__title         { color: #F3F4F6; }
+.dark .hscard__subtitle      { color: #8B949E; }
 
 /* ── Steps (How it works) ── */
-.dark .home-step             { background: #132d1e; border-color: #1f4a30; }
-.dark .home-step__title      { color: #e0f2e9; }
-.dark .home-step__desc       { color: #a8d8b4; }
+.dark .home-step             { background: #1C2128; border-color: #30363D; }
+.dark .home-step__title      { color: #F3F4F6; }
+.dark .home-step__desc       { color: #C9D1D9; }
 
 /* ── About page ── */
 .dark .about-main,
@@ -231,44 +274,87 @@ body {
 .dark .saved-main,
 .dark .login-main,
 .dark .register-main,
-.dark .gen-main              { background: #0b1e14; }
+.dark .gen-main              { background: #0F1115; }
 
 /* ── Dashboard stats ── */
-.dark .dash-stat__value      { color: #e0f2e9; }
+.dark .dash-stat__value      { color: #F3F4F6; }
 
-/* ── Login / Register notices ── */
+/* ── Login / Register notices — recolored to the semantic warning token
+   instead of the old green-adjacent mustard, matches "Warning" in the new palette ── */
 .dark .login-notice,
-.dark .register-notice       { background: #2a1e0a; border-color: #8a5a1a; color: #f4d4a0; }
+.dark .register-notice       { background: rgba(245, 158, 11, .12); border-color: #F59E0B; color: #F59E0B; }
 .dark .login-title,
-.dark .register-title        { color: #e0f2e9; }
+.dark .register-title        { color: #F3F4F6; }
 .dark .login-subtitle,
-.dark .register-subtitle     { color: #7dcca0; }
+.dark .register-subtitle     { color: #8B949E; }
 
 /* ── Saved listings ── */
-.dark .sl-full               { border-color: #1f4a30; }
-.dark .sl-section            { border-top-color: #1f4a30; }
-.dark .sl-keyword            { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
-.dark .sl-section__label     { color: #4a9b6f; }
-.dark .saved-header .page-title { color: #e0f2e9; }
+.dark .sl-full               { border-color: #30363D; }
+.dark .sl-section            { border-top-color: #30363D; }
+.dark .sl-keyword            { background: #24292F; border-color: #30363D; color: #C9D1D9; }
+.dark .sl-section__label     { color: #4ADE80; }
+.dark .saved-header .page-title { color: #F3F4F6; }
+.dark .sl-id                 { color: #8B949E; }
+.dark .saved-search__input   { background: #161B22; border-color: #30363D; color: #F3F4F6; }
+.dark .saved-search__input::placeholder { color: #8B949E; }
+.dark .saved-search__input:focus { border-color: #22C55E; box-shadow: 0 0 0 3px rgba(34, 197, 94, .2); }
 
-/* ── Form (ProductForm) ── */
-.dark .product-form          { background: #2d1313; border-color: #1f4a30; }
-.dark .form-title            { color: #e0f2e9; }
-.dark .form-subtitle         { color: #7dcca0; }
-.dark .field-input--error    { background: #2d1515; border-color: #c0392b; }
+/* ── Edit modal form (Saved.jsx) ── */
+.dark .sl-edit-label         { color: #F3F4F6; }
+.dark .sl-edit-hint          { color: #8B949E; }
+.dark .sl-edit-input         { background: #161B22; border-color: #30363D; color: #F3F4F6; }
+.dark .sl-edit-input:focus   { border-color: #22C55E; background: #1C2128; box-shadow: 0 0 0 3px rgba(34, 197, 94, .2); }
+
+/* ── Form (ProductForm) — fixed a bug: this was previously an unrelated dark
+   RED (#2d1313), not a real error state, now corrected to the standard card surface ── */
+.dark .form-title            { color: #F3F4F6; }
+.dark .form-subtitle         { color: #8B949E; }
+
+/* ── Image upload (ProductForm) ── */
+.dark .image-dropzone        { background: #161B22; border-color: #30363D; color: #8B949E; }
+.dark .image-dropzone:hover  { border-color: #22C55E; background: rgba(34, 197, 94, .06); color: #4ADE80; }
+.dark .image-preview__img    { border-color: #30363D; }
 
 /* ── Modal ── */
-.dark .modal-box             { background: #132d1e; border-color: #1f4a30; }
-.dark .modal-header          { border-bottom-color: #1f4a30; }
-.dark .modal-title           { color: #e0f2e9; }
-.dark .modal-body            { color: #a8d8b4; }
-.dark .modal-close           { background: #1a3a2a; border-color: #1f4a30; color: #7dcca0; }
+.dark .modal-overlay         { background: rgba(0, 0, 0, .65); }
+.dark .modal-box             { background: #1C2128; border-color: #30363D; }
+.dark .modal-header          { border-bottom-color: #30363D; }
+.dark .modal-title           { color: #F3F4F6; }
+.dark .modal-body            { color: #C9D1D9; }
+.dark .modal-close           { background: #24292F; border-color: #30363D; color: #8B949E; }
+.dark .modal-close:hover     { background: #2D333B; color: #F3F4F6; }
+
+/* ── Toast ── */
+.dark .toast-item            { box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+
+/* ── ErrorBoundary ── */
+.dark .eb-card                { background: #1C2128; border-color: #30363D; }
+.dark .eb-title               { color: #F3F4F6; }
+.dark .eb-body                { color: #8B949E; }
+.dark .eb-detail              { background: rgba(239, 68, 68, .1); border-color: #EF4444; color: #EF4444; }
 
 /* ── Empty states ── */
-.dark .empty-title           { color: #e0f2e9; }
-.dark .empty-body            { color: #7dcca0; }
-.dark .loading-text          { color: #e0f2e9; }
-.dark .loading-sub           { color: #7dcca0; }
+.dark .empty-title           { color: #F3F4F6; }
+.dark .empty-body            { color: #8B949E; }
+.dark .loading-text          { color: #F3F4F6; }
+.dark .loading-sub           { color: #8B949E; }
+
+/* ── Loader ── */
+.dark .loader-spinner        { border-color: #30363D; border-top-color: #22C55E; }
+.dark .loader-dots span      { background: #22C55E; }
+.dark .loader-text           { color: #8B949E; }
+.dark .loader-skeleton__bar  { background: linear-gradient(90deg, #1C2128 25%, #24292F 50%, #1C2128 75%); background-size: 200% 100%; }
+.dark .loader-wrap--full     { background: rgba(15, 17, 21, .85); }
+
+/* ── Buttons (Button.jsx) — primary stays the accent, secondary/danger
+   use neutral surfaces so green isn't the loudest thing on every screen ── */
+.dark .hs-btn--primary       { background: #22C55E; color: #0F1115; }
+.dark .hs-btn--primary:hover { background: #16A34A; }
+.dark .hs-btn--primary:active { background: #15803D; }
+.dark .hs-btn--secondary     { background: #1C2128; border-color: #30363D; color: #C9D1D9; }
+.dark .hs-btn--secondary:hover { background: #24292F; color: #F3F4F6; border-color: #3D444D; }
+.dark .hs-btn--danger        { background: #EF4444; color: #F3F4F6; }
+.dark .hs-btn--danger:hover  { background: #DC2626; }
 
 /* Smooth transitions */
 .dark *,

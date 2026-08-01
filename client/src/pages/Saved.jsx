@@ -7,10 +7,10 @@ import { Link } from "react-router-dom";
 import Navbar        from "../components/Navbar";
 import Footer         from "../components/Footer";
 import Button          from "../components/Button";
-import Loader          from "../components/Loader";
-import Modal            from "../components/Modal";
-import { useToast }     from "../components/Toast";
-import { getSavedDescriptions, deleteSavedDescription } from "../services/api";
+import Loader           from "../components/Loader";
+import Modal              from "../components/Modal";
+import { useToast }        from "../components/Toast";
+import { getSavedDescriptions, deleteSavedDescription, updateSavedDescription } from "../services/api";
 
 const PLATFORM_COLORS = {
   Amazon:    "#ff9900",
@@ -29,7 +29,7 @@ function formatDate(iso) {
 }
 
 // ── Single listing card ───────────────────────────────────────────────────
-function ListingCard({ item, onRequestDelete }) {
+function ListingCard({ item, onRequestDelete, onRequestEdit }) {
   const [expanded, setExpanded] = useState(false);
   const [copied,   setCopied]   = useState(false);
 
@@ -146,6 +146,9 @@ function ListingCard({ item, onRequestDelete }) {
         <Button variant="secondary" size="sm" onClick={() => setExpanded((e) => !e)}>
           {expanded ? "▲ Hide Details" : "▼ View Details"}
         </Button>
+        <Button variant="secondary" size="sm" onClick={() => onRequestEdit(item)}>
+          ✏️ Edit
+        </Button>
         <Button variant="primary" size="sm" onClick={copyAll}>
           {copied ? "✓ Copied!" : "⎘ Copy"}
         </Button>
@@ -216,6 +219,16 @@ function ListingCard({ item, onRequestDelete }) {
   );
 }
 
+// ── Edit form fields config (drives the modal below) ──────────────────────
+const EDIT_FIELDS = [
+  { key: "title",             label: "Title",              type: "text" },
+  { key: "shortDescription",  label: "Short Description",  type: "textarea", rows: 3 },
+  { key: "longDescription",   label: "Long Description",   type: "textarea", rows: 5 },
+  { key: "bulletPoints",      label: "Bullet Points",      type: "list",     hint: "One per line" },
+  { key: "seoKeywords",       label: "SEO Keywords",        type: "list",     hint: "Comma-separated" },
+  { key: "usageStorage",      label: "Usage & Storage",    type: "textarea", rows: 2 },
+];
+
 // ── Main page ─────────────────────────────────────────────────────────────
 export default function Saved() {
   const [items,       setItems]       = useState([]);
@@ -224,6 +237,9 @@ export default function Saved() {
   const [searchQuery,  setSearchQuery] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null); // item pending delete confirmation
   const [deleting,     setDeleting]    = useState(false);
+  const [editTarget,   setEditTarget]  = useState(null); // item currently being edited
+  const [editForm,     setEditForm]    = useState({});
+  const [saving,        setSaving]     = useState(false);
   const { showToast } = useToast();
 
   const fetchItems = useCallback(async () => {
@@ -255,6 +271,53 @@ export default function Saved() {
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
+    }
+  };
+
+  // ── Edit flow ──────────────────────────────────────────────────────────
+  const openEdit = (item) => {
+    setEditTarget(item);
+    setEditForm({
+      title: item.title || "",
+      shortDescription: item.shortDescription || "",
+      longDescription: item.longDescription || "",
+      bulletPoints: (item.bulletPoints || []).join("\n"),
+      seoKeywords: (item.seoKeywords || []).join(", "),
+      usageStorage: item.usageStorage || "",
+    });
+  };
+
+  const closeEdit = () => {
+    if (saving) return;
+    setEditTarget(null);
+    setEditForm({});
+  };
+
+  const handleEditField = (key) => (e) =>
+    setEditForm((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const saveEdit = async () => {
+    if (!editTarget) return;
+    setSaving(true);
+    try {
+      const payload = {
+        title: editForm.title,
+        shortDescription: editForm.shortDescription,
+        longDescription: editForm.longDescription,
+        bulletPoints: editForm.bulletPoints.split("\n").map((s) => s.trim()).filter(Boolean),
+        seoKeywords: editForm.seoKeywords.split(",").map((s) => s.trim()).filter(Boolean),
+        usageStorage: editForm.usageStorage,
+      };
+      const { data } = await updateSavedDescription(editTarget._id, payload);
+      const updated = data.data || data;
+      setItems((prev) => prev.map((it) => (it._id === updated._id ? updated : it)));
+      showToast("Listing updated", "success");
+      setEditTarget(null);
+      setEditForm({});
+    } catch (err) {
+      showToast(err?.response?.data?.message || "Failed to update listing", "error");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -345,6 +408,7 @@ export default function Saved() {
                   key={item._id}
                   item={item}
                   onRequestDelete={setDeleteTarget}
+                  onRequestEdit={openEdit}
                 />
               ))}
             </div>
@@ -372,6 +436,50 @@ export default function Saved() {
           </Button>
           <Button variant="danger" size="sm" onClick={confirmDelete} disabled={deleting}>
             {deleting ? "Deleting..." : "🗑 Delete"}
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Edit modal -- Week 8 Update flow */}
+      <Modal
+        isOpen={!!editTarget}
+        onClose={closeEdit}
+        title="Edit Listing"
+        size="lg"
+      >
+        <div className="sl-edit-form">
+          {EDIT_FIELDS.map((field) => (
+            <div key={field.key} className="sl-edit-field">
+              <label className="sl-edit-label" htmlFor={`edit-${field.key}`}>
+                {field.label}
+                {field.hint && <span className="sl-edit-hint"> — {field.hint}</span>}
+              </label>
+              {field.type === "textarea" || field.type === "list" ? (
+                <textarea
+                  id={`edit-${field.key}`}
+                  className="sl-edit-input"
+                  rows={field.rows || 3}
+                  value={editForm[field.key] || ""}
+                  onChange={handleEditField(field.key)}
+                />
+              ) : (
+                <input
+                  id={`edit-${field.key}`}
+                  type="text"
+                  className="sl-edit-input"
+                  value={editForm[field.key] || ""}
+                  onChange={handleEditField(field.key)}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: ".5rem", justifyContent: "flex-end", marginTop: "1.25rem" }}>
+          <Button variant="secondary" size="sm" onClick={closeEdit} disabled={saving}>
+            Cancel
+          </Button>
+          <Button variant="primary" size="sm" onClick={saveEdit} disabled={saving}>
+            {saving ? "Saving..." : "✓ Save Changes"}
           </Button>
         </div>
       </Modal>
@@ -419,6 +527,20 @@ export default function Saved() {
           font-size:.9rem; color:#6b9e82; max-width:420px;
           margin:0 auto 1.5rem; line-height:1.7;
         }
+
+        /* Edit modal form */
+        .sl-edit-form { display:flex; flex-direction:column; gap:1rem; max-height:60vh; overflow-y:auto; }
+        .sl-edit-field { display:flex; flex-direction:column; gap:.35rem; }
+        .sl-edit-label { font-size:.85rem; font-weight:700; color:#1a3a2a; }
+        .sl-edit-hint { font-weight:400; color:#7a9e8a; font-size:.78rem; }
+        .sl-edit-input {
+          width:100%; padding:.6rem .8rem; font-size:.875rem;
+          background:#f7faf8; border:1.5px solid #c8dfc8; border-radius:8px;
+          outline:none; font-family:inherit; color:#1a3a2a; resize:vertical;
+          box-sizing:border-box;
+        }
+        .sl-edit-input:focus { border-color:#2d6a4f; background:#fff; }
+
         @media(max-width:768px){ .saved-main { padding:2rem 1.25rem; } }
         @media(max-width:375px){ .saved-main { padding:1.5rem 1rem; } }
       `}</style>

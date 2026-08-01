@@ -42,6 +42,9 @@ export const regenerateDescription = (id, data) => api.post(`/generate/regenerat
 export const getSavedDescriptions  = ()         => api.get("/generate");
 export const getSavedDescription   = (id)       => api.get(`/generate/${id}`);
 export const deleteSavedDescription = (id)      => api.delete(`/generate/${id}`);
+// Week 8: manual edit of a saved generation's content (title, descriptions,
+// bullets, keywords, usage/storage). Backend whitelists which fields this can touch.
+export const updateSavedDescription = (id, data) => api.patch(`/generate/${id}`, data);
 
 // ── Products ──────────────────────────────────────────────────────────────
 // params: { page, limit, platform }

@@ -8,7 +8,7 @@ const GeneratedDescription = require('../models/GeneratedDescription');
 const { generateMockDescription } = require('../services/mockAiService');
 
 // --- AI provider switch (Day 3: "OpenAI or Gemini") ---
-// Set AI_PROVIDER=openai or AI_PROVIDER=gemini in .env — no code changes needed to swap.
+// Set AI_PROVIDER=openai or AI_PROVIDER=gemini in .env -- no code changes needed to swap.
 const AI_PROVIDER = (process.env.AI_PROVIDER || 'openai').toLowerCase();
 
 const providerKeyPresent =
@@ -25,6 +25,20 @@ function getGenerateDescription() {
   return require('../services/aiService').generateDescription;
 }
 
+// Fields a user is allowed to hand-edit after generation (Week 8: Update flow).
+// Deliberately excludes user, product, productName, category, platform, tone --
+// those define WHAT was generated and changing them without regenerating would
+// leave the content inconsistent with its own metadata. Only the generated
+// content itself is editable here.
+const EDITABLE_FIELDS = [
+  'title',
+  'shortDescription',
+  'longDescription',
+  'bulletPoints',
+  'seoKeywords',
+  'usageStorage',
+];
+
 // --- POST /api/generate ---
 router.post('/', protect, generateLimiter, validateGenerateInput, async (req, res) => {
   const input = req.body;
@@ -37,7 +51,7 @@ router.post('/', protect, generateLimiter, validateGenerateInput, async (req, re
       ? generateMockDescription(input)
       : await generateDescription(input);
   } catch (err) {
-    // Real AI call failed (rate limit, outage, malformed response) — fall back
+    // Real AI call failed (rate limit, outage, malformed response) -- fall back
     // to mock content rather than showing the user a hard error.
     console.error('AI generation failed, falling back to mock:', err.message);
     aiOutput = generateMockDescription(input);
@@ -52,8 +66,6 @@ router.post('/', protect, generateLimiter, validateGenerateInput, async (req, re
       platform: input.platform,
       tone: input.tone,
       // Week 8: optional base64 product image from ProductForm's upload.
-      // Not validated by validateGenerateInput (it's optional/unstructured),
-      // so pass it through as-is; schema default is null if omitted.
       image: input.image || null,
       ...aiOutput,
     });
@@ -68,7 +80,7 @@ router.post('/', protect, generateLimiter, validateGenerateInput, async (req, re
   }
 });
 
-// --- POST /api/generate/regenerate/:id — regenerate content for an existing entry ---
+// --- POST /api/generate/regenerate/:id -- regenerate content for an existing entry ---
 router.post('/regenerate/:id', protect, generateLimiter, validateObjectIdParam, async (req, res) => {
   try {
     const existing = await GeneratedDescription.findOne({ _id: req.params.id, user: req.user._id });
@@ -107,7 +119,32 @@ router.post('/regenerate/:id', protect, generateLimiter, validateObjectIdParam, 
   }
 });
 
-// --- GET /api/generate — list current user's saved generations ---
+// --- PATCH /api/generate/:id -- Week 8: manual edit of a saved generation's content ---
+// Lets a user hand-tweak the AI output (fix a typo, tighten a bullet, etc.)
+// without triggering a fresh AI call or losing their other saved fields.
+router.patch('/:id', protect, validateObjectIdParam, async (req, res) => {
+  try {
+    const existing = await GeneratedDescription.findOne({ _id: req.params.id, user: req.user._id });
+    if (!existing) return res.status(404).json({ success: false, message: 'Not found' });
+
+    // Only apply whitelisted fields that were actually sent -- prevents a
+    // partial/malformed request from wiping fields the user didn't touch,
+    // and prevents editing fields like category/tone/platform through this route.
+    EDITABLE_FIELDS.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        existing[field] = req.body[field];
+      }
+    });
+
+    await existing.save();
+
+    res.status(200).json({ success: true, data: existing });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Update failed', error: err.message });
+  }
+});
+
+// --- GET /api/generate -- list current user's saved generations ---
 router.get('/', protect, async (req, res) => {
   const items = await GeneratedDescription.find({ user: req.user._id }).sort({ createdAt: -1 });
   res.json({ success: true, data: items });
